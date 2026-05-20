@@ -1,107 +1,173 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, {
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from "react";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { CalendarCheck, Table, Rocket } from "lucide-react";
+import { useRouter } from "next/navigation";
 
+const accent = "#00b893";
 
-const accent = "#bc29e9";
+// یک ease واحد برای همه جا
+const smoothEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-export default function Page() {
-  const [formOpen, setFormOpen] = useState(false);
+const cssVars: CSSProperties = {
+  ["--accent" as `--${string}`]: accent,
+};
 
-  const smoothEase = [0.22, 1, 0.36, 1];
-
-  const fadeUp = {
-    initial: { opacity: 0, y: 80 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 3, ease: "easeOut" },
-  };
-
-
-  const stagger = {
-    initial: {},
-    animate: {
-      transition: {
-        staggerChildren:0.5 ,
-        delayChildren: 0.2,
-      },
+// واریانت‌ها
+const fadeUpVariants: Variants = {
+  initial: { opacity: 0, y: 80 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 3,
+      ease: smoothEase,
     },
-  };
+  },
+};
 
-  const item = {
-    initial: { opacity: 0, y: 30 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 2.5 , ease: "easeInOut" },
+const staggerVariants: Variants = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.5,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  initial: { opacity: 0, y: 30 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 2.5,
+      ease: smoothEase,
+    },
+  },
+};
+
+function AdvertisingPage() {
+  const [formOpen, setFormOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const data = {
+      name: String(formData.get("name") ?? ""),
+      phone: String(formData.get("phone") ?? ""),
+      message: String(formData.get("message") ?? ""),
+    };
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        form.reset();
+        setFormOpen(false);
+        router.push("/success");
+        return;
+      }
+
+      console.error("ارسال ناموفق:", result);
+      alert("خطا در ارسال: " + (result.error || "لطفا دوباره تلاش کنید."));
+    } catch (err) {
+      console.error("خطای ارتباط:", err);
+      alert("خطا در ارتباط با سرور، لطفا بعدا تلاش کنید.");
+    }
   };
 
   return (
-      <main
-        dir="rtl"
-        style={{ "--accent": accent } as React.CSSProperties}
-        className="min-h-screen bg-[#050505]"
-      >
-
- 
+    <main
+      dir="rtl"
+      style={cssVars}
+      className="min-h-screen bg-[#050505]"
+    >
       {/* HERO */}
       <section className="relative min-h-screen flex items-center px-8 md:px-16">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(67,133,207,0.16),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(67,133,207,0.10),transparent_35%)]" />
         <div className="max-w-7xl mx-auto px-8 md:px-16 w-full relative z-10">
           <motion.div
-            variants={stagger}
+            variants={staggerVariants}
             initial="initial"
             animate="animate"
             className="grid lg:grid-cols-2 gap-16 items-center"
           >
-            <motion.div variants={item} className="space-y-8">
+            <motion.div variants={itemVariants} className="space-y-8">
               <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-white/10 bg-white/5 text-[11px] tracking-[0.2em] uppercase text-white/50">
                 <span className="w-2 h-2 rounded-full bg-[color:var(--accent)] shadow-[0_0_20px_rgba(67,133,207,0.8)]" />
                 استودیو کسب‌و‌کار روماوا
               </div>
 
               <motion.h1
-                {...fadeUp}
-                className="text-white/30 text-3xl md:text-4xl lg:text-5xl leading-[1.1] font-light tracking-tight">
+                variants={fadeUpVariants}
+                className="text-white/30 text-3xl md:text-4xl lg:text-5xl leading-[1.1] font-light tracking-tight"
+              >
                 کسب‌وکاری که
                 <br />
-                <span className="text-[color:var(--accent)]">محتوای هدفمند</span> میسازه
+                <span className="text-[color:var(--accent)]">تبلیغات اصولی </span>
+                می‌کنه
                 <br />
-                <span className="text-white/70"> فروش داره</span>
+                <span className="text-white/70"> دیده میشه</span>
               </motion.h1>
 
               <motion.p
-                {...fadeUp}
-                transition={{ duration: 2, ease: "easeInOut" , delay: 0.15 }}
+                variants={fadeUpVariants}
+                transition={{
+                  duration: 2,
+                  ease: smoothEase,
+                  delay: 0.15,
+                }}
                 className="max-w-xl text-base md:text-lg text-white/55 leading-8"
               >
-                طراحی پلن کسب‌وکار شما طوری که
-                 فرایند معرفی ، جذب و تبدیل مخاطب به مشتری ، فروش و در نهایت برند شدن شما در سریع‌ترین و بهینه ترین حالت اتفاق بیفته 
+                طراحی پلن کسب‌وکار شما طوری که فرایند معرفی، جذب و تبدیل مخاطب به
+                مشتری، فروش و در نهایت برند شدن شما در سریع‌ترین و بهینه‌ترین
+                حالت اتفاق بیفته.
               </motion.p>
 
               <motion.div
-                variants={item}
+                variants={itemVariants}
                 className="flex flex-col sm:flex-row gap-4 pt-4"
               >
                 <button
+                  type="button"
                   onClick={() => setFormOpen(true)}
                   className="group inline-flex items-center justify-center gap-4 px-8 py-4 rounded-full bg-[color:var(--accent)] text-white font-medium shadow-[0_0_40px_rgba(67,133,207,0.25)] hover:scale-[1.02] transition-transform"
                 >
                   رزرو وقت مشاوره
-                  <span className="text-lg transition-transform group-hover:translate-x-1">←</span>
+                  <span className="text-lg transition-transform group-hover:translate-x-1">
+                    ←
+                  </span>
                 </button>
 
                 <a
                   href="#problem"
                   className="inline-flex items-center justify-center px-8 py-4 rounded-full border border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 transition-colors"
                 >
-                 اطلاعات بیشتر
+                  اطلاعات بیشتر
                 </a>
               </motion.div>
             </motion.div>
 
             {/* HERO VISUAL */}
             <motion.div
-              variants={item}
+              variants={itemVariants}
               className="relative flex justify-center lg:justify-end"
             >
               <div className="relative w-full max-w-[560px] aspect-square">
@@ -111,34 +177,45 @@ export default function Page() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.92, y: 40 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 2 , ease: "easeInOut" }}
+                  transition={{
+                    duration: 2,
+                    ease: smoothEase,
+                  }}
                   className="absolute top-12 left-12 right-12 bottom-12 rounded-[2rem] border border-white/10 bg-[#0b0b0b]/80 p-8 flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="text-white/60 text-sm">Smart Content</div>
+                    <div className="text-white/60 text-sm">
+                      Smart Content
+                    </div>
                     <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: accent }}
                     />
                   </div>
 
-                <img
-                  src="content.png"
-                  alt="about"
-                  className="w-full flex-1 object-cover"
-                />
+                  <img
+                    src="baleAdv.png"
+                    alt="about"
+                    className="w-full flex-1 object-cover"
+                  />
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="text-[10px] text-white/45 uppercase tracking-[0.2em]">جلب توجه</div>
+                      <div className="text-[10px] text-white/45 uppercase tracking-[0.2em]">
+                        جلب توجه
+                      </div>
                       <div className="mt-3 h-2 w-full rounded-full bg-white/10" />
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="text-[10px] text-white/45 uppercase tracking-[0.2em]">اعتماد سازی</div>
+                      <div className="text-[10px] text-white/45 uppercase tracking-[0.2em]">
+                        کپی رایتینگ
+                      </div>
                       <div className="mt-3 h-2 w-full rounded-full bg-white/10" />
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="text-[10px] text-white/45 uppercase tracking-[0.2em]">فروش</div>
+                      <div className="text-[10px] text-white/45 uppercase tracking-[0.2em]">
+                        نرخ تبدیل
+                      </div>
                       <div className="mt-3 h-2 w-full rounded-full bg-white/10" />
                     </div>
                   </div>
@@ -152,64 +229,60 @@ export default function Page() {
       {/* PROBLEM */}
       <section id="problem" className="py-24 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-8 md:px-16">
-
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1.6 }}
+            transition={{ duration: 1.6, ease: smoothEase }}
             className="space-y-12"
           >
-
-            {/* headline */}
-            <h2 className=" mx-auto text-center text-3xl md:text-5xl lg:text-6xl font-light leading-[1.2] tracking-tight">
-             فروش در اینستاگرام پیچیده و زمان بره
+            <h2 className="mx-auto text-center text-3xl md:text-5xl lg:text-6xl font-light leading-[1.2] tracking-tight">
+              تبلیغات در بله، با بازدهی پایین و زمان‌بره
               <br />
-              <p className="text-white/30 text-1xl md:text-2xl lg:text-3xl">
-                اگه محتوای هدفمندی برای کسب‌وکارت نسازی
-              </p>
+              <span className="text-white/30 text-xl md:text-2xl lg:text-3xl">
+                اگه تبلیغاتت رو اصولی اجرا نکنی
+              </span>
             </h2>
 
-            {/* bullet points */}
             <ul className="grid grid-cols-1 md:grid-cols-3 gap-10 text-white/80 text-lg leading-8 justify-items-center">
-
               <li className="flex gap-4 items-start max-w-[260px]">
                 <span className="mt-1 w-3 h-3 rounded-full bg-[color:var(--accent)]" />
-              تکنیک‌های ترند هم به هویت کسب‌و‌کار آسیب میزنن و هم منجر به فروش نمیشن
-              </li>
-
-              <li className="flex gap-4 items-start max-w-[260px]">
-                <span className=" mt-1 w-3 h-3 rounded-full bg-[color:var(--accent)]" />
-              هزینه‌های زیاد تجهیزات برای خروجی‌ای میشه که بیشتر به تیزرهای عروسی شباهت دارن
+                ثبت تبلیغ و تایید محتوای تبلیغ معمولاً فرایند زمان‌بریه.
               </li>
 
               <li className="flex gap-4 items-start max-w-[260px]">
                 <span className="mt-1 w-3 h-3 rounded-full bg-[color:var(--accent)]" />
-              معمولا قبل از تولید ، هدف مشخصی برای محتوا تعیین نمیشه 
+                نرخ تبدیل بازدیدکننده به دنبال‌کننده به دلیل استفاده نکردن از
+                کپی رایتینگ اصولی خیلی پایینه.
               </li>
 
+              <li className="flex gap-4 items-start max-w-[260px]">
+                <span className="mt-1 w-3 h-3 rounded-full bg-[color:var(--accent)]" />
+                اجرای غلط تبلیغ معمولاً باعث دور ریخته شدن هزینه‌ی تبلیغ میشه.
+              </li>
             </ul>
 
-
             <p className="text-white/70 text-lg max-w-3xl mx-auto text-center leading-8">
-              این وضعیت معمولاً به شب‌های بی‌خوابی و حس دائمیِ سردرگمی در رشد کسب‌وکار ختم می‌شود. ما نمی‌خواهیم برندت چنین تجربه‌ای داشته باشد. استودیو کسب‌وکار "روماوا" به کسب‌وکارها کمک می‌کند یک مسیر روشن برای معرفی، جذب و تبدیل مخاطب بسازند؛ مسیری که برای برند تو هم جواب میدن.
+              این وضعیت معمولاً به شب‌های بی‌خوابی و حس دائمی سردرگمی در رشد
+              کسب‌وکار ختم می‌شود. ما نمی‌خواهیم برندت چنین تجربه‌ای داشته باشد.
+              استودیو کسب‌وکار روماوا به کسب‌وکارها کمک می‌کند مسیر روشن و
+              اصولی برای کپی رایتینگ و اجرای تبلیغ داشته باشند تا در نهایت با
+              بازدهی قابل قبول، تبدیل مخاطب انجام شود.
             </p>
-
           </motion.div>
         </div>
       </section>
 
-
       {/* SERVICES */}
       <section id="services" className="py-12 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-8 md:px-16">
-          <div className="flex items-end justify-between gap-6 mb-12">
+          <div className="flex items-end justify بین gap-6 mb-12">
             <div>
               <p className="text-[11px] uppercase tracking-[0.25em] text-white/35 mb-4">
                 خدمات ما
               </p>
               <h2 className="text-3xl md:text-5xl font-light">
-                یک فرایند روشن برای محتوا‌های برندت
+                یک فرایند روشن برای تبلیغ برندت
               </h2>
             </div>
           </div>
@@ -217,25 +290,28 @@ export default function Page() {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                title: "تدوین استراتژي محتوایی",
-                text:  "در مرحله‌ی اول ، استراتژی محتوات رو اوکی می‌کنیم آرکتایپ برندت ، پرسونای مخاطب و ... مواردی هستن که در این مرحله مشخص می‌شن " , 
-
+                title: "ثبت تبلیغ در سریع‌ترین زمان",
+                text: "متناسب با هویت برند شما و تارگت فصلی، بهترین نوع محتوا را با توجه به بازار و سیکل انتخاب می‌کنیم تا تبلیغ به‌موقع ثبت و تایید شود.",
               },
               {
-                title: "تعریف تکنیک و فرم محتوایی",
-                text: "با توجه به خروجی استراتژی ، جایگاه برند و محصول‌ در فرایند بازاریابی ، بهترین تکنیک و فرم محتوایی رو برای پیج‌ات انتخاب می‌کنیم",
+                title: "کپی رایتینگ اصولی",
+                text: "ساخت صفحه و مسیر ارائه‌ای که مخاطب را تا اقدام نهایی همراه کند و نرخ تبدیل را بالا ببرد.",
               },
               {
-                title: " آماده سازی تجهیزات حرفه‌ای",
-                text: "بدون نیاز به اجاره یا خرید بهترین تجهیزات ، متناسب با پروژه شما تجهیزات را تهیه و اقدام به ضبط می‌کنیم ",
+                title: "اجرای بهینه",
+                text: "بدون نیاز به اجاره یا خرید تجهیزات گران، متناسب با پروژه شما تجهیزات لازم را فراهم می‌کنیم.",
               },
             ].map((card, index) => (
               <motion.div
-                key={index}
+                key={card.title}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 2, delay: index * 0.18, ease: "easeInOut" }}
+                transition={{
+                  duration: 2,
+                  delay: index * 0.18,
+                  ease: smoothEase,
+                }}
                 className="rounded-3xl border border-white/10 bg-white/5 p-8 hover:bg-white/[0.07] transition-colors"
               >
                 <div
@@ -258,7 +334,7 @@ export default function Page() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 2, ease: smoothEase }}
-            className="rounded-[2rem] p-8 md:p-12 shadow-2xl"
+            className="rounded-[2rem] p-8 md:p-12 shadow-2xl border border-white/10 bg-white/5"
           >
             <p className="text-[11px] uppercase tracking-[0.25em] text-white/35 mb-4">
               نقشه راه
@@ -282,26 +358,27 @@ export default function Page() {
                 },
                 {
                   icon: <Rocket size={28} strokeWidth={1.5} />,
-                  title: "۳. شروع سفر محتوای هدفمند",
+                  title: "۳. شروع سفر تبلیغات اصولی",
                   text: "پیاده‌سازی نهایی و آماده‌سازی برای جذب بهتر مشتری.",
                 },
-              ].map((step, index) => (
+              ].map((step) => (
                 <div
-                  key={index}
-                  className="rounded-2xl border border-black/10 p-6 flex flex-col items-start"
+                  key={step.title}
+                  className="rounded-2xl border border-white/10 p-6 flex flex-col items-start bg-[#050505]"
                 >
                   <div className="mb-4 text-[color:var(--accent)]">
                     {step.icon}
                   </div>
-                  <h3 className="text-2xl font-medium mb-3">{step.title}</h3>
-                  <p className="text-black/60 leading-8">{step.text}</p>
+                  <h3 className="text-2xl font-medium mb-3">
+                    {step.title}
+                  </h3>
+                  <p className="text-white/60 leading-8">{step.text}</p>
                 </div>
               ))}
             </div>
           </motion.div>
         </div>
       </section>
-
 
       {/* CTA */}
       <section id="contact" className="py-12">
@@ -310,21 +387,22 @@ export default function Page() {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 2 , ease: "easeInOut" }}
+            transition={{ duration: 2, ease: smoothEase }}
             className="rounded-[2rem] border border-white/10 bg-white/5 p-10 md:p-16 text-center"
           >
             <p className="text-[11px] uppercase tracking-[0.25em] text-white/35 mb-4">
               آماده‌ای؟
             </p>
             <h2 className="text-3xl md:text-5xl font-light mb-6">
-             برندت لایق شروع این سفره
+              برندت لایق شروع این سفره
             </h2>
             <p className="max-w-2xl mx-auto text-white/55 leading-8 mb-10">
-              برای شروع، فقط کافی است یک جلسه کوتاه رزرو کنی تا مسیر مناسب برندت را
-              بررسی کنیم.
+              برای شروع، فقط کافی است یک جلسه کوتاه رزرو کنی تا مسیر مناسب
+              برندت را بررسی کنیم.
             </p>
 
             <button
+              type="button"
               onClick={() => setFormOpen(true)}
               className="inline-flex items-center justify-center px-10 py-4 rounded-full bg-[color:var(--accent)] text-white font-medium shadow-[0_0_40px_rgba(67,133,207,0.25)] hover:scale-[1.02] transition-transform"
             >
@@ -341,7 +419,7 @@ export default function Page() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 2 , ease: smoothEase }}
+            transition={{ duration: 0.6, ease: smoothEase }}
             className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center px-6"
             onClick={() => setFormOpen(false)}
           >
@@ -349,7 +427,7 @@ export default function Page() {
               initial={{ y: 80, opacity: 0, scale: 0.94 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 40, opacity: 0, scale: 0.96 }}
-              transition={{ duration: 1.5 , ease: smoothEase }}
+              transition={{ duration: 0.6, ease: smoothEase }}
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0c0c0c] p-8 md:p-10 shadow-2xl"
             >
@@ -358,21 +436,19 @@ export default function Page() {
                 <button
                   onClick={() => setFormOpen(false)}
                   className="text-white/45 hover:text-white transition-colors"
+                  type="button"
                 >
                   ✕
                 </button>
               </div>
 
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-4"
-              >
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <input
                   name="name"
                   type="text"
                   placeholder="نام و نام خانوادگی"
                   required
-                  className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-[color:var(--accent)] transition-colors"
+                  className="w-full rounded-2xl bg سفید/5 border border-white/10 px-4 py-3 outline-none focus:border-[color:var(--accent)] transition-colors"
                 />
                 <input
                   name="phone"
@@ -395,14 +471,12 @@ export default function Page() {
                   ارسال درخواست
                 </button>
               </form>
-
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-
     </main>
   );
 }
 
+export default AdvertisingPage;
