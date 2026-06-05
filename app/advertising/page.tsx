@@ -4,6 +4,7 @@ import React, { useState, type CSSProperties, type FormEvent } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { CalendarCheck, Table, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
+import BrandMarquee from "@/components/BrandMarquee";
 
 const accent = "#00b893";
 const smoothEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -37,15 +38,15 @@ const itemVariants: Variants = {
 const services = [
   {
     title: "ثبت تبلیغ در سریع‌ترین زمان",
-    text: "متناسب با هویت برند شما و تارگت فصلی، بهترین نوع محتوا را با توجه به بازار و سیکل انتخاب می‌کنیم تا تبلیغ به‌موقع ثبت و تایید شود.",
+    text: "بدون نیاز به انتظارهای طولانی برای تایید تبلیغ و یا  آزمون‌ و خطا برای رفع تبلیغ‌هایی که تایید نمیشن ، در کمترین زمان ممکن تبلیغ‌ات رو منتشر می‌کنیم",
   },
   {
     title: "کپی رایتینگ اصولی",
-    text: "ساخت صفحه و مسیر ارائه‌ای که مخاطب را تا اقدام نهایی همراه کند و نرخ تبدیل را بالا ببرد.",
+    text: "عنوان و زیر عنوان تبلیغ‌ات درصد قابل توجهی از بهینه شدن تبلیغ‌ات رو تشکیل میدن ، متناسب ترین تکنیک جلب توجه رو توی کپی رایتینگ تبلیغ‌ات استفاده خواهیم کرد . ",
   },
   {
-    title: "اجرای بهینه",
-    text: "بدون نیاز به اجاره یا خرید تجهیزات گران، متناسب با پروژه شما تجهیزات لازم را فراهم می‌کنیم.",
+    title: " اجرای بهینه قیف فروش",
+    text: "از تکنیک‌های بهینه سازی نرخ تبدیل متناسب با هویت برند و کشف مخاطبت‌ات استفاده می‌کنیم تا بیشترین نرخ تبدیل رو داشته باشی . ",
   },
 ] as const;
 
@@ -53,25 +54,32 @@ const steps = [
   {
     icon: <CalendarCheck size={28} strokeWidth={1.5} />,
     title: "۱. رزرو وقت مشاوره",
-    text: "فهم دقیق جایگاه، مسئله و مزیت اصلی برند.",
+    text: "برای شروع کافیه روی دکمه‌ی رزرو مشاوره کلیک کنی و اطلاعاتت رو ثبت کنی . در سریع ترین زمان باهات تماس خواهیم گرفت",
   },
   {
     icon: <Table size={28} strokeWidth={1.5} />,
     title: "۲. جلسه‌ی هماهنگی",
-    text: "طراحی پیام و ساختار ارائه بر اساس StoryBrand.",
+    text: "اگه جلسه‌ی تلفنی‌امون خوش پیش بره یه جلسه‌ آنلاین/حضوری تنظیم می‌کنیم تا برای پیشبرد تبلیغ‌ات با هم گپ بزنیم",
   },
   {
     icon: <Rocket size={28} strokeWidth={1.5} />,
-    title: "۳. شروع سفر تبلیغات اصولی",
-    text: "پیاده‌سازی نهایی و آماده‌سازی برای جذب بهتر مشتری.",
+    title: "۳. شروع سفر تبلیغات هدفمند",
+    text: " اگه نتیجه‌ی جلسه‌امون مثبت باشه یه قراراداد با هم تنظیم می‌کنیم و این مسیر جذاب رو شروع می‌کنیم",
   },
 ] as const;
 
 const problems = [
   "ثبت تبلیغ و تایید محتوای تبلیغ معمولاً فرایند زمان‌بریه.",
-  "نرخ تبدیل بازدیدکننده به دنبال‌کننده به دلیل استفاده نکردن از کپی رایتینگ اصولی خیلی پایینه.",
+  "کپی رایتینگ غیر اصولی ، نرخ تبدیل بازدیدکننده به دنبال کننده رو به میزان زیادی کاهش میده ",
   "اجرای غلط تبلیغ معمولاً باعث دور ریخته شدن هزینه‌ی تبلیغ میشه.",
 ] as const;
+
+const brands = [
+  { name: "Balonet", src: "/brands/balonet.svg" },
+  { name: "Entekhab", src: "/brands/entekhab.svg" },
+  { name: "Magfa", src: "/brands/magfa.png" },
+  { name: "Melak", src: "/brands/melak.png" },
+];
 
 function AdvertisingPage() {
   const [formOpen, setFormOpen] = useState(false);
@@ -116,7 +124,7 @@ function AdvertisingPage() {
   return (
     <main dir="rtl" style={cssVars} className="min-h-screen bg-[#050505] text-white">
       {/* HERO */}
-      <section className="relative flex min-h-screen items-center px-8 md:px-16">
+      <section className="relative flex min-h-screen items-center px-6 pt-28 md:px-16 md:pt-20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(67,133,207,0.16),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(67,133,207,0.10),transparent_35%)]" />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl">
@@ -124,7 +132,7 @@ function AdvertisingPage() {
             variants={staggerVariants}
             initial="initial"
             animate="animate"
-            className="grid items-center gap-16 lg:grid-cols-2"
+            className="grid items-center gap-12 lg:grid-cols-2"
           >
             <motion.div variants={itemVariants} className="space-y-8">
               <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.2em] text-white/50">
@@ -136,11 +144,11 @@ function AdvertisingPage() {
                 initial={{ opacity: 0, y: 80 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 2.2, ease: smoothEase }}
-                className="text-3xl font-light leading-[1.1] tracking-tight text-white/30 md:text-4xl lg:text-5xl"
+                className="text-4xl font-light leading-[1.05] tracking-tight text-white/30 sm:text-5xl lg:text-6xl"
               >
                 کسب‌وکاری که
                 <br />
-                <span className="text-[color:var(--accent)]">تبلیغات اصولی </span>
+                <span className="text-[color:var(--accent)]">تبلیغات هدفمند </span>
                 می‌کنه
                 <br />
                 <span className="text-white/70"> دیده میشه</span>
@@ -152,9 +160,10 @@ function AdvertisingPage() {
                 transition={{ duration: 1.8, ease: smoothEase, delay: 0.15 }}
                 className="max-w-xl text-base leading-8 text-white/55 md:text-lg"
               >
-                طراحی پلن کسب‌وکار شما طوری که فرایند معرفی، جذب و تبدیل مخاطب به
-                مشتری، فروش و در نهایت برند شدن شما در سریع‌ترین و بهینه‌ترین
-                حالت اتفاق بیفته.
+               تبلیغ‌ات رو با
+                <span className="text-white">  ۳ اصل تبلیغات هدفمند  </span> 
+                اجرا می‌کنیم
+                 تا در نهایت بهینه‌ترین حالت تبدیل بازدیدکننده به خریدار برات اتفاق بیفته
               </motion.p>
 
               <motion.div variants={itemVariants} className="flex flex-col gap-4 pt-4 sm:flex-row">
@@ -179,8 +188,14 @@ function AdvertisingPage() {
             </motion.div>
 
             {/* HERO VISUAL */}
-            <motion.div variants={itemVariants} className="relative flex justify-center lg:justify-end">
-              <div className="relative aspect-square w-full max-w-[560px]">
+              <motion.div
+
+                variants={itemVariants}
+
+                className="relative flex justify-center lg:justify-end"
+
+              >
+                <div className="relative aspect-square w-[115%] max-w-[620px] sm:w-full">
                 <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(67,133,207,0.20),transparent_60%)] blur-2xl" />
                 <div className="absolute inset-8 rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl" />
 
@@ -188,9 +203,9 @@ function AdvertisingPage() {
                   initial={{ opacity: 0, scale: 0.92, y: 40 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 1.8, ease: smoothEase }}
-                  className="absolute bottom-12 left-12 right-12 top-12 flex flex-col justify-between rounded-[2rem] border border-white/10 bg-[#0b0b0b]/80 p-8"
+                  className="absolute inset-5 sm:inset-8 md:inset-12 flex flex-col justify-center rounded-[2rem] border border-white/10 bg-[#0b0b0b]/80 p-6"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="mb-6 flex items-center justify-between">
                     <div className="text-sm text-white/60">Smart Content</div>
                     <div
                       className="h-3 w-3 rounded-full"
@@ -201,7 +216,7 @@ function AdvertisingPage() {
                   <img
                     src="/baleAdv.png"
                     alt="Advertising preview"
-                    className="w-full flex-1 object-cover"
+                    className="w-full object-contain"
                   />
 
                   <div className="grid grid-cols-3 gap-4">
@@ -238,7 +253,7 @@ function AdvertisingPage() {
               تبلیغات در بله، با بازدهی پایین و زمان‌بره
               <br />
               <span className="text-xl text-white/30 md:text-2xl lg:text-3xl">
-                اگه تبلیغاتت رو اصولی اجرا نکنی
+                اگه تبلیغاتت رو هدفمند اجرا نکنی
               </span>
             </h2>
 
@@ -252,11 +267,11 @@ function AdvertisingPage() {
             </ul>
 
             <p className="mx-auto max-w-3xl text-center text-lg leading-8 text-white/70">
-              این وضعیت معمولاً به شب‌های بی‌خوابی و حس دائمی سردرگمی در رشد
-              کسب‌وکار ختم می‌شود. ما نمی‌خواهیم برندت چنین تجربه‌ای داشته باشد.
-              استودیو کسب‌وکار روماوا به کسب‌وکارها کمک می‌کند مسیر روشن و
-              اصولی برای کپی رایتینگ و اجرای تبلیغ داشته باشند تا در نهایت با
-              بازدهی قابل قبول، تبدیل مخاطب انجام شود.
+              این وضعیت به سردرگمی کسب‌وکارها ختم میشه. 
+              ما نمیخواهیم برند تو هم چنین تجربه‌ای داشته باشه ، 
+              استودیو کسب‌وکار روماوا به کسب‌وکارها کمک می‌کند
+               مسیر روشن و هدفمند برای کپی‌رایتینگ و اجرای تبلیغ داشته باشن
+
             </p>
           </motion.div>
         </div>
@@ -271,7 +286,7 @@ function AdvertisingPage() {
                 خدمات ما
               </p>
               <h2 className="text-3xl font-light md:text-5xl">
-                یک فرایند روشن برای تبلیغ برندت
+              اجرای ۳ اصل تبلیغات هدفمند
               </h2>
             </div>
           </div>
@@ -302,37 +317,72 @@ function AdvertisingPage() {
         </div>
       </section>
 
+      {/* BRANDS */}
+      <section className="relative overflow-hidden border-t border-white/5 py-28">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,84,246,0.08),transparent_65%)]" />
+
+        <div className="relative mx-auto max-w-[1800px]">
+          <div className="mb-16 text-center">
+            <p className="text-[11px] tracking-[0.35em] text-white/25">
+              برندهایی که همراشون بودیم
+            </p>
+          </div>
+
+          <BrandMarquee
+            speed={16}
+            className="px-4 md:px-8"
+            itemClassName="h-[92px] min-w-[180px] md:h-[110px] md:min-w-[220px]"
+            items={brands}
+          />
+        </div>
+      </section>
+
       {/* PLAN */}
-      <section id="plan" className="py-20">
-        <div className="mx-auto max-w-7xl px-8 md:px-16">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.6, ease: smoothEase }}
-            className="rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl md:p-12"
-          >
+      <section id="plan" className="border-t border-white/5 py-24">
+        <div className="mx-auto max-w-7xl px-6 md:px-16">
+
+          <div className="mb-16">
             <p className="mb-4 text-[11px] uppercase tracking-[0.25em] text-white/35">
               نقشه راه
             </p>
 
-            <h2 className="mb-10 text-3xl font-light md:text-5xl">
-              ۳ قدم تا شروع سفر
+            <h2 className="text-3xl font-light md:text-5xl">
+              سه قدم تا  تبلیغات هدفمند
             </h2>
+          </div>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-              {steps.map((step) => (
-                <div
-                  key={step.title}
-                  className="flex flex-col items-start rounded-2xl border border-white/10 bg-[#050505] p-6"
-                >
-                  <div className="mb-4 text-[color:var(--accent)]">{step.icon}</div>
-                  <h3 className="mb-3 text-2xl font-medium">{step.title}</h3>
-                  <p className="leading-8 text-white/60">{step.text}</p>
+          <div className="grid grid-cols-1 gap-14 md:grid-cols-3">
+
+            {steps.map((step, index) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{
+                  duration: 0.9,
+                  delay: index * 0.08,
+                  ease: smoothEase,
+                }}
+                className="relative"
+              >
+
+                <div className="mb-6 text-[color:var(--accent)]">
+                  {step.icon}
                 </div>
-              ))}
-            </div>
-          </motion.div>
+
+                <h3 className="mb-5 text-2xl font-medium">
+                  {step.title}
+                </h3>
+
+                <p className="leading-8 text-white/55">
+                  {step.text}
+                </p>
+
+              </motion.div>
+            ))}
+
+          </div>
         </div>
       </section>
 
@@ -353,7 +403,7 @@ function AdvertisingPage() {
               برندت لایق شروع این سفره
             </h2>
             <p className="mx-auto mb-10 max-w-2xl leading-8 text-white/55">
-              برای شروع، فقط کافی است یک جلسه کوتاه رزرو کنی تا مسیر مناسب
+              برای شروع، فقط کافیه یک جلسه کوتاه رزرو کنی تا مسیر مناسب
               برندت را بررسی کنیم.
             </p>
 

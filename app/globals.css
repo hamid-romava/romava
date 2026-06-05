@@ -1,11 +1,19 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: 'Estedad';
-  src: url('/fonts/Estedad.ttf') format('truetype');
+  font-family: 'YekanBakh';
+  src: url('/fonts/YekanBakh-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
+
+@font-face {
+  font-family: 'YekanBakhLight';
+  src: url('/fonts/YekanBakh-Light.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 
 :root {
   --background: #ffffff;
@@ -22,7 +30,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Estedad', sans-serif;
+  font-family: 'YekanBakh', sans-serif;
 }
 
 :root{
@@ -34,7 +42,48 @@ html{
 }
 
 body{
-  background:#050505;
+  background:#fdfaf4;
+}
+
+@keyframes marquee {
+
+  0% {
+
+    transform: translateX(0);
+
+  }
+
+  100% {
+
+    transform: translateX(-50%);
+
+  }
+
+}
+
+h2 {
+  font-family: 'YekanBakhLight', sans-serif;
+
+}
+
+.animate-marquee {
+
+  animation: marquee 60s linear infinite;
+
+}
+
+@keyframes heroMarqueeLTR {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.marquee-ltr {
+  animation: heroMarqueeLTR 18s linear infinite;
+  will-change: transform;
 }
 
 

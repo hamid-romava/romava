@@ -58,69 +58,55 @@ const fadeUpVariants: Variants = {
 
 const heroValues = [
   {
-    title: "جذب مخاطب هدف با محتوایی استراتژیک",
+    title: "تیمی با بک‌گراند استارتاپ ، معتقدان به تست و بهبود مداوم",
     icon: (
+      // آیکون اول: فلش دایره‌ای (Loop) - شبیه به 🔄
       <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="2" />
-        <path d="M21 3l-6 6" />
+        <path d="M12 2.5c5.523 0 10 4.477 10 10s-4.477 10-10 10-10-4.477-10-10 4.477-10 10-10zm0 2c-4.418 0-8 3.582-8 8s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm1 10.5h-4v-2h4v2z" />
+        <path d="M11.5 16.5l2-2-2-2" />
       </svg>
     ),
   },
   {
-    title: "خلق با انتخاب از ۱۱۷ تکنیک داستان‌سرایی ",
+    title: "خالقانی با پیش زمینه‌های هنری ",
     icon: (
+      // آیکون دوم: نماد جعبه شعبده بازی (برای خلاقیت) - بدون تغییر
       <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M4 20l10-10" />
-        <path d="M14 4l1.5 1.5" />
-        <path d="M18 2v3" />
-        <path d="M21 5h-3" />
-        <path d="M18 7l2 2" />
+        <path d="M5 7l5-5v4m0 0h6v4m-6-4h-6v10h6m4-4l5 5v-4m0 0h-6v-4m6 4h6M8 13h8M5 7h14v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7z"/>
+        <path d="M12 17l-2-2 2-2 2 2-2 2z"/>
+        <circle cx="12" cy="12" r="1"/>
       </svg>
     ),
   },
   {
-    title: "دریافت هزینه بر اساس نتیجه",
+    title: " مریدان کشف بازاری ",
     icon: (
+      // آیکون سوم: نماد کشف (ذره‌بین) - بدون تغییر
       <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M8 12h8" />
-        <path d="M12 8v8" />
-        <path d="M16 16l4 4" />
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     ),
   },
 ];
 
-const problems = [
-  "تکنیک‌های عمومی هم به هویت کسب‌و‌کار آسیب میزنن و هم منجر به فروش نمیشن",
-  " بیشتر محتواها به تیزر عروسی شباهت دارن تا محتوای کسب‌و‌کار",
-  "   هزینه کردن بدون دریافت نتیجه مشخص در شرایط فعلی ریسکیه",
-] as const;
 
-const services = [
+
+const teamMembers = [
   {
-    title: "مشخص کردن استراتژی محتوا",
-    text: "با انجام تحقیقات بازار و کشف بازاری ، استراتژی محتوات رو مشخص می‌کنیم تا بهترین مدل محتوا برای برندت مشخص بشه",
-    image: "/services/content.jpg",
-    href: "/#",
-    cta: "اطلاعات بیشتر",
+    name: "حمید هاشمی",
+    role: "برندچی",
+    image: "/team/#",
+    text: "حمید برندچی مجموعه‌اس خارجکیا میگن برند استراتژیست    . حمید بیش از ۵ سال سابقه‌ی استارتاپی داره ",
   },
+
   {
-    title: " خلق با انتخاب از میان ۱۱۷ تکنیک داستان‌سرایی",
-    text: "با تکنیک‌های استوری‌تلینگ(داستان سرایی) ، محتواهایی تولید می‌کنیم که هم مناسب هویت برندت باشن هم در خدمت فروش باشن.",
-    image: "/contentCreation/techniques.jpg",
-    href: "/#",
-    cta: "اطلاعات بیشتر",
+    name: "سارا محمدی",
+    role: "محتوا‌چی",
+    image: "/team/arian.jpg",
+    text: "سارا عاشق خلق تولیدمحتوای ویدئوییه ، یه گوشی بهش بدین تا یه اثر سینمایی از اون روز براتون محتوا بسازه . سارا ۴ ساله که عاشقانه محتوا میسازه",
   },
-  {
-    title: "دریافت هزینه بر اساس نتیجه",
-    text: "در هر مرحله هدف محتوا رو مشخص خواهیم کرد و صرفا به ازای نتیجه هزینه دریافت می‌کنیم  بعلاوه هزینه پس پرداخت خواهد بود یعنی بعد از رسیدن به نتیجه و قبل از محتوای بعدی هزینه رو پرداخت می‌کنی ",
-    image: "/contentCreation/result.jpg",
-    href: "/#",
-    cta: "اطلاعات بیشتر",
-  },
+
 ];
 
 const brands = [
@@ -195,99 +181,327 @@ function MainPage() {
       className="relative min-h-screen bg-[#252525] text-white"
     >
 
+      {/* Hero */}
 
       <Hero
         badge="استودیو کسب‌وکار روماوا"
-        titleLine1="فروش بیشتر با"
-        titleLine2="محتوای هدفمند"
-        description= "محتوات رو با ۳ اصل محتواسازی هدفمند اجرا می‌کنیم تا مخاطب، فقط بیننده‌ی محتوا نباشه؛ به مشتری تبدیل بشه."
-        image="/services/content.jpg"
+        titleLine1="کنارتیم"
+        titleLine2="برای برند شدن"
+        description= "صاحبان کسب‌وکار بیشتر زمانشون رو برای خدمات و محصولاتشون میزارن و زمانی بابت تبلیغات و برندینگ اصولی کسب‌وکارشون اختصاص نمیدن . ما در استودیو کسب‌و‌کار روماوا ، با خلق محتواهایی مبتنی بر اصول استراتژی محتوا و تکنیک‌های داستان سرایی به کسب‌وکارها کمک می‌کنیم برندشون دیده و ماندگار بشه"
+        image="/team/hero.jpg"
         values={heroValues}
         onConsultClick={() => console.log("consult")}
       />
 
-
-      {/* PROBLEM */}
-      <section
-        id="problem"
-        className="relative overflow-hidden border-t border-slate-200/60 bg-[#f6f7ff] py-28"
-      >
-        {/* soft background glows */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-[12%] -top-[15%] h-[520px] w-[520px] rounded-full bg-violet-300/35 blur-[110px]" />
-          <div className="absolute -right-[10%] top-[10%] h-[520px] w-[520px] rounded-full bg-sky-300/30 blur-[110px]" />
-          <div className="absolute left-1/2 top-[70%] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-fuchsia-200/25 blur-[120px]" />
+      {/* RomavaMeaning */}
+      <section className="relative overflow-hidden bg-[#fbf8f2] px-6 py-28 md:px-16">
+        {/* عدد پس‌زمینه بزرگ */}
+        <div className="pointer-events-none absolute left-[-5%] top-10 select-none text-[20rem] font-black text-slate-200/40 md:text-[15rem]">
+          ۱
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-8 md:px-16">
-          <div className="grid items-start gap-10 md:grid-cols-[1fr_2fr]">
-            {/* LEFT: image (1/3) */}
-            <div className="order-2 md:order-1">
-              <div className="relative mx-auto w-full max-w-sm md:max-w-none">
-                <img
-                  src="/problem.png"
-                  alt="problem"
-                  className="w-full select-none object-contain"
-                  loading="lazy"
-                />
+        <div className="relative z-10 mx-auto max-w-7xl">
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: smoothEase }}
+            className="mb-16"
+          >
+            
+            {/* هدر */}
+            <div className="border-b border-slate-300 pb-10">
+              <div className="mb-4 flex items-center justify-start gap-3">
+                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Brand Identity
+                </span>
               </div>
+
+              <h2 className="text-right text-4xl font-black text-[#1a1835] md:text-6xl">
+                فلسفه{" "}
+                <span className="relative inline-block">
+                  روماوا
+                  <span className="absolute bottom-2 left-0 -z-10 h-4 w-full bg-blue-400/30 md:h-6"></span>
+                </span>
+              </h2>
             </div>
 
-            {/* RIGHT: heading + stacked cards (2/3) */}
+            {/* پاراگراف (زیر خط) */}
+            <p className="mt-12 max-w-4xl text-right text-xl leading-relaxed text-slate-600 md:text-3xl">
+              نامی که ریشه در <span className="font-bold text-[#1a1835]">تداوم و طنین</span> دارد.
+              روماوا ترکیبی از حرکت سیال و صدایی است که فراموش نمی‌شود.
+            </p>
+
+          </motion.div>
+
+          {/* بخش محتوای متنی */}
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+            
             <motion.div
-              variants={staggerVariants}
-              initial="initial"
-              whileInView="whileInView"
-              viewport={{ once: true, amount: 0.2 }}
-              className="order-1 space-y-10 md:order-2"
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-6 text-right"
             >
-              <motion.h2
-                variants={fadeUpVariants}
-                className="text-right text-3xl font-extralight leading-[1.05] tracking-[-0.03em] text-slate-900 md:text-4xl"
-              >
-                فروش در اینستاگرام پیچیده و هزینه بره
-                <br />
-                <span className="text-slate-500">
-                اگه محتوای هدفمندی نسازی
+              <h3 className="text-2xl font-bold text-[#1a1835]">
+                رو (خورشید) + ماوا (جایگاه)
+              </h3>
 
+              <p className="text-lg leading-loose text-slate-500">
+                روماوا از ترکیب رو + ماوا تشکیل شده.  
+                رو به معنی خورشید و ماوا به معنی جایگاه است.  
+                روماوا یعنی جایگاه نور، ایده و خلاقیت.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="flex items-center justify-center rounded-[3rem] bg-white/50 p-12 border border-slate-200"
+            >
+              <div className="text-center">
+                <span className="block text-sm uppercase tracking-widest text-slate-400 mb-2">
+                  Philosophy
                 </span>
-              </motion.h2>
 
-              {/* cards stacked vertically */}
-              <div className="space-y-6">
-                {problems.map((problem) => (
-                  <motion.div
-                    key={problem}
-                    variants={fadeUpVariants}
-                    // حذف whileHover، نگه داشتن transition و اضافه کردن hover:-translate-y-6
-                    className="group relative overflow-hidden rounded-[2rem] border border-slate-200/70 bg-white/70 p-8 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)] backdrop-blur-xl transition-transform duration-300 ease-out hover:-translate-y-6"
-                  >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.18),transparent_55%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
-                    <div className="relative z-10">
-                      {/* dot + text inline */}
-                      <div className="flex items-start gap-4">
-                        <span className="mt-[0.45rem] h-5 w-5 shrink-0 rounded-full bg-rose-500" />
-                        <p className="text-sm leading-7 text-slate-700 md:text-lg md:leading-8">
-                          {problem}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                <p className="text-3xl font-light italic text-slate-700">
+                  "صدایی که در ذهن می‌ماند، برندی است که برنده می‌شود."
+                </p>
               </div>
             </motion.div>
+
           </div>
         </div>
       </section>
 
-      {/* SERVICES */}
-      <ServicesSection
-        services={services}
-        heading={"محتوا به سبک روماوا"}
-        eyebrow="SERVICES"
-        vhPerItem={70}
-      />
+      {/* TEAM */}
+      <section className="relative overflow-hidden bg-[#fbf8f2] px-6 py-28 md:px-16">
+        {/* عدد پس‌زمینه */}
+        <div className="pointer-events-none absolute left-[-5%] top-10 select-none text-[20rem] font-black text-slate-200/40 md:text-[30rem]">
+          ۲
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl">
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: smoothEase }}
+            className="mb-16"
+          >
+
+            {/* Header */}
+            <div className="border-b border-slate-300 pb-10">
+              <div className="mb-4 flex items-center justify-start gap-3">
+                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  The Team
+                </span>
+              </div>
+
+              <h2 className="text-right text-4xl font-black text-[#1a1835] md:text-6xl">
+                <span className="relative inline-block">
+                  تیم
+                  <span className="absolute bottom-2 left-0 -z-10 h-4 w-full bg-blue-400/30 md:h-6"></span>
+                </span>{" "}
+                روماوا
+              </h2>
+            </div>
+
+            {/* پاراگراف (بعد از خط) */}
+            <p className="mt-12 max-w-4xl text-right text-xl leading-relaxed text-slate-600 md:text-3xl">
+              تیم ما از متخصصانی تشکیل شده که{" "}
+              <span className="font-bold text-[#1a1835]">نگاهی نو</span> به بازاریابی دارند.
+              ما برای رشد برند شما، استراتژی و خلاقیت را ترکیب می‌کنیم.
+            </p>
+
+          </motion.div>
+
+          {/* Grid کارت‌های تیم */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            {teamMembers.map((member, index) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: index * 0.1, ease: smoothEase }}
+                className="group"
+              >
+                {/* تصویر */}
+                <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-[2rem] bg-slate-200">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+
+                  {/* Overlay */}
+                  <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent p-5 text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
+                      {member.role}
+                    </p>
+                    <h3 className="text-lg font-bold text-white">
+                      {member.name}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* توضیح */}
+                <p className="px-2 text-right text-xs leading-relaxed text-slate-500">
+                  {member.text}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* Address */}
+      <section className="relative overflow-hidden bg-[#fbf8f2] px-6 py-28 md:px-16">
+
+        {/* عدد پس‌زمینه */}
+        <div className="pointer-events-none absolute left-[-5%] top-10 select-none text-[20rem] font-black text-slate-200/40 md:text-[30rem]">
+          ۳
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl">
+
+          {/* HEADER */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: smoothEase }}
+            className="mb-16"
+          >
+
+            <div className="border-b border-slate-300 pb-10">
+
+              <div className="mb-4 flex items-center justify-start gap-3">
+                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Studio
+                </span>
+              </div>
+
+              <h2 className="text-right text-4xl font-black text-[#1a1835] md:text-6xl">
+                <span className="relative inline-block">
+                  استودیو
+                  <span className="absolute bottom-2 left-0 -z-10 h-4 w-full bg-blue-400/30 md:h-6"></span>
+                </span>{" "}
+                روماوا
+              </h2>
+
+            </div>
+
+            <p className="mt-12 max-w-4xl text-right text-xl leading-relaxed text-slate-600 md:text-3xl">
+              جایی که استراتژی، خلاقیت و طراحی در کنار هم قرار می‌گیرند تا برندهایی ساخته شوند
+              که در ذهن مخاطب ماندگار بمانند.
+            </p>
+
+          </motion.div>
+
+          {/* FULL IMAGE */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.4, ease: smoothEase }}
+            className="relative overflow-hidden rounded-[2.5rem] border border-slate-200"
+          >
+            <img
+              src="/team/team.jpg"
+              alt="Romava Team"
+              className="h-[320px] w-full object-cover md:h-[560px]"
+            />
+
+            <div className="absolute inset-0 bg-black/35" />
+
+            <div className="absolute bottom-8 right-8 md:bottom-14 md:right-14">
+              <div className="rounded-2xl border border-white/10 bg-black/30 px-6 py-5 backdrop-blur-xl text-right">
+                <p className="text-sm tracking-[0.2em] text-white/40">
+                  ROMAVA STUDIO
+                </p>
+
+                <h3 className="mt-3 text-2xl font-light md:text-4xl text-white">
+                  ساخت برندهایی
+                  <br />
+                  که فراموش نمی‌شوند
+                </h3>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ADDRESS */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, ease: smoothEase }}
+            className="mt-8 rounded-[2rem] border border-slate-200 bg-white/60 p-8 md:p-10"
+          >
+            <div className="grid gap-10 md:grid-cols-2">
+
+              <div className="text-right">
+                <p className="mb-4 text-[11px] tracking-[0.25em] text-slate-400">
+                  LOCATION
+                </p>
+
+                <h3 className="text-3xl font-light text-[#1a1835]">
+                  استودیو کسب‌وکار روماوا
+                </h3>
+
+                <p className="mt-6 max-w-xl leading-8 text-slate-600">
+                  اصفهان، فدک مال
+                  <br />
+                  برای هماهنگی جلسات حضوری، قبل از مراجعه با کلیک روی
+                  دکمه «رزرو وقت مشاوره»، زمان جلسه خود را تنظیم کنید.
+                </p>
+              </div>
+
+              <div className="flex items-end">
+                <div className="w-full rounded-2xl border border-slate-200 bg-white p-6">
+
+                  <div className="mb-6 flex items-center justify-between">
+                    <span className="text-sm text-slate-400">
+                      Business Studio
+                    </span>
+
+                    <span className="h-2 w-2 rounded-full bg-blue-600" />
+                  </div>
+
+                  <div className="space-y-4 text-slate-600">
+
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                      <span>آدرس</span>
+                      <span>ایران، اصفهان، فدک مال</span>
+                    </div>
+
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                      <span>ایمیل</span>
+                      <span>hello@romava.ir</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span>اینستاگرام</span>
+                      <span>@romava.studio</span>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+
+        </div>
+      </section>
 
       {/* BRANDS */}
       <section className="relative overflow-hidden border-t border-white/5 py-28">
@@ -321,7 +535,7 @@ function MainPage() {
             >
               برند شدن لیاقتته،{" "}
               <span className="text-slate-300">
-              فقط کافیه این مسیر رو شروع کنی 
+                فقط کافیه قدم اول رو برداری
               </span>
             </motion.h2>
           </div>
