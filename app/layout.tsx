@@ -18,6 +18,13 @@ export default function RootLayout({
   const [formOpen, setFormOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const smoothEase: [number, number, number, number] = [0.23, 1, 0.32, 1];
+
+
+
   useEffect(() => {
   const openModal = () => setFormOpen(true);
 
@@ -55,39 +62,54 @@ export default function RootLayout({
     },
   };
 
-  const openForm = () => setFormOpen(true);
-  const closeForm = () => setFormOpen(false);
+const openForm = () => {
+  setError(null);
+  setFormOpen(true);
+};
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const closeForm = () => {
+  setFormOpen(false);
+};
 
-    const formData = new FormData(e.currentTarget);
+ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    const data = {
-      name: String(formData.get("name") ?? "").trim(),
-      phone: String(formData.get("phone") ?? "").trim(),
-      message: String(formData.get("message") ?? "").trim(),
-    };
+  setError(null);
+  setSubmitting(true);
 
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+  const form = e.currentTarget;
+  const formData = new FormData(form);
 
-      if (res.ok) {
-        e.currentTarget.reset();
-        closeForm();
-      } else {
-        alert("خطا در ارسال فرم");
-      }
-    } catch {
-      alert("خطا در ارتباط با سرور");
-    }
+  const data = {
+    name: String(formData.get("name") ?? "").trim(),
+    phone: String(formData.get("phone") ?? "").trim(),
+    message: String(formData.get("message") ?? "").trim(),
   };
+
+  try {
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      setError("ارسال درخواست ناموفق بود. لطفاً دوباره تلاش کنید.");
+      return;
+    }
+
+    form.reset();
+    setFormOpen(false);
+    window.location.href = "/success";
+  } catch {
+    setError("مشکلی در ارتباط با سرور پیش آمد.");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
 
   return (
@@ -97,8 +119,10 @@ export default function RootLayout({
         className="bg-[#050505] text-white antialiased overflow-x-hidden"
       >
 
+        
+
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+          src="https://www.googletagmanager.com/gtag/js?id=G-0J0PJQKYNZ"
           strategy="afterInteractive"
         />
 
@@ -236,41 +260,55 @@ export default function RootLayout({
         <AnimatePresence>
           {formOpen && (
             <motion.div
-              initial="initial"
-              animate="animate"
-              exit="initial"
-              variants={containerVariants}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm"
               onClick={closeForm}
-              className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center px-6"
             >
               <motion.div
-                variants={fadeInUp}
+                initial={{
+                  y: 80,
+                  opacity: 0,
+                  scale: 0.94,
+                }}
+                animate={{
+                  y: 0,
+                  opacity: 1,
+                  scale: 1,
+                }}
+                exit={{
+                  y: 40,
+                  opacity: 0,
+                  scale: 0.96,
+                }}
+                transition={{
+                  duration: 0.45,
+                  ease: smoothEase,
+                }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md rounded-[2.5rem] border border-white/10 bg-[#0c0c0c] p-10 shadow-2xl relative overflow-hidden"
+                className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0c0c0c]/95 p-8 backdrop-blur-2xl"
               >
-                <div className="absolute top-0 left-0 w-full h-1 bg-[color:var(--accent)] opacity-20" />
-
-                <div className="flex items-center justify-between mb-10">
-                  <h3 className="text-2xl font-light tracking-tight">
-                    شروع گفتگو
-                  </h3>
+                <div className="mb-8 flex items-center justify-between">
+                  <h3 className="text-2xl font-light">رزرو جلسه</h3>
 
                   <button
                     onClick={closeForm}
-                    className="text-white/40 hover:text-white transition-colors"
+                    className="text-white/45 transition-colors hover:text-white"
+                    type="button"
+                    aria-label="بستن"
                   >
                     ✕
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <input
                     name="name"
                     type="text"
-                    placeholder="نام شما"
+                    placeholder="نام و نام خانوادگی"
                     required
-                    className="w-full rounded-2xl bg-white/[0.03] border border-white/5 px-5 py-4 outline-none focus:border-[color:var(--accent)] transition-all font-light text-white"
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition-colors focus:border-[color:var(--accent)] text-white placeholder:text-white/40"
                   />
 
                   <input
@@ -278,24 +316,30 @@ export default function RootLayout({
                     type="tel"
                     placeholder="شماره تماس"
                     required
-                    className="w-full rounded-2xl bg-white/[0.03] border border-white/5 px-5 py-4 outline-none focus:border-[color:var(--accent)] transition-all font-light text-white"
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition-colors focus:border-[color:var(--accent)] text-white placeholder:text-white/40"
                   />
 
                   <textarea
                     name="message"
-                    placeholder="چه خدماتی مد نظر شماست؟"
-                    rows={3}
+                    placeholder="توضیح کوتاه درباره پروژه"
+                    rows={4}
                     required
-                    className="w-full rounded-2xl bg-white/[0.03] border border-white/5 px-5 py-4 outline-none focus:border-[color:var(--accent)] transition-all font-light resize-none text-white"
+                    className="w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition-colors focus:border-[color:var(--accent)] text-white placeholder:text-white/40"
                   />
+
+                  {error && (
+                    <p className="text-sm text-red-400" role="alert">
+                      {error}
+                    </p>
+                  )}
 
                   <button
                     type="submit"
-                    className="w-full rounded-2xl bg-[color:var(--accent)] text-white py-4 font-medium hover:brightness-110 transition-all shadow-lg shadow-[#2254f6]/20"
+                    disabled={submitting}
+                    className="w-full rounded-2xl bg-[color:var(--accent)] py-3 font-medium text-white transition-opacity hover:opacity-95 disabled:opacity-60"
                   >
-                    ارسال درخواست
+                    {submitting ? "در حال ارسال..." : "ارسال درخواست"}
                   </button>
-
                 </form>
               </motion.div>
             </motion.div>

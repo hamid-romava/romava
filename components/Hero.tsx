@@ -114,6 +114,8 @@ export default function Hero({
   onConsultClick,
 }: HeroProps) {
   return (
+
+    
     <section className="relative overflow-hidden bg-[#fbf8f2] md:min-h-screen md:bg-[#fdfaf4]">
       {/* Background */}
       <div className="pointer-events-none absolute inset-0 z-0">
@@ -126,12 +128,12 @@ export default function Hero({
         <div className="relative md:grid md:grid-cols-2 md:items-center md:gap-10">
 
           {/* Mobile Image */}
-          <div className="relative md:hidden">
+          <div className="relative md:hidden pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.1, ease: smoothEase }}
-              className="relative h-[330px] w-full overflow-hidden rounded-[2.5rem] bg-white shadow-2xl"
+              className="relative z-0 h-[330px] w-full overflow-hidden rounded-[2.5rem] bg-white shadow-2xl"
             >
               <img src={image} alt="Hero" className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
@@ -166,11 +168,11 @@ export default function Hero({
                   {description}
                 </p>
 
-                <div className="mt-7 md:mt-10">
+                <div className="relative z-20 mt-7 md:mt-10">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-
                     <button
-                      onClick={() => window.dispatchEvent(new Event("open-consult-modal"))}
+                      type="button"
+                      onClick={onConsultClick}
                       className="group flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#2254f6] px-6 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                       رزرو وقت مشاوره
@@ -206,7 +208,7 @@ export default function Hero({
         </div>
 
         {/* Value Stack */}
-        <div className="mt-6 relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] border-t border-[#e8decb]/70 md:static md:mt-12 md:mx-0 md:w-auto md:rounded-[2rem] md:border md:border-[#e8decb]/70">
+        <div className="mt-6 relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] border-t border-[#e8decb]/70 md:static md:mt-12 md:mx-0 md:w-auto md:rounded-[2rem] md:border md:border-[#e8decb]/70 z-0">
 
           {/* Desktop */}
           <div className="hidden md:flex">
