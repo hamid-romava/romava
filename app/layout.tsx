@@ -3,10 +3,11 @@
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, useEffect, useCallback, FormEvent } from "react";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import { Analytics } from "@vercel/analytics/next"
 import Script from "next/script";
+import { useRouter } from "next/navigation";
 
 
 
@@ -15,6 +16,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
+
+
   const [formOpen, setFormOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -23,7 +27,58 @@ export default function RootLayout({
 
   const smoothEase: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
+    const router = useRouter();
 
+  const openForm = useCallback(() => {
+  setError(null);
+  setFormOpen(true);
+}, []);
+
+const closeForm = useCallback(() => {
+  setFormOpen(false);
+}, []);
+
+const handleSubmit = useCallback(
+  async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const data = {
+      name: String(formData.get("name") ?? "").trim(),
+      phone: String(formData.get("phone") ?? "").trim(),
+      message: String(formData.get("message") ?? "").trim(),
+    };
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        setError("ارسال درخواست ناموفق بود. لطفاً دوباره تلاش کنید.");
+        return;
+      }
+
+      form.reset();
+      setFormOpen(false);
+      router.push("/success");
+    } catch (err) {
+      console.error(err);
+      setError("مشکلی در ارتباط با سرور پیش آمد. دوباره تلاش کنید.");
+    } finally {
+      setSubmitting(false);
+    }
+  },
+  [router]
+);
 
   useEffect(() => {
   const openModal = () => setFormOpen(true);
@@ -39,78 +94,8 @@ export default function RootLayout({
 
   const framerEase: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
-  const containerVariants: Variants = {
-    initial: { opacity: 0 },
-    animate: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.2,
-      },
-    },
-  };
 
-  const fadeInUp: Variants = {
-    initial: { opacity: 0, y: 30 },
-    animate: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 1,
-        ease: framerEase,
-      },
-    },
-  };
-
-const openForm = () => {
-  setError(null);
-  setFormOpen(true);
-};
-
-const closeForm = () => {
-  setFormOpen(false);
-};
-
- const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-
-  setError(null);
-  setSubmitting(true);
-
-  const form = e.currentTarget;
-  const formData = new FormData(form);
-
-  const data = {
-    name: String(formData.get("name") ?? "").trim(),
-    phone: String(formData.get("phone") ?? "").trim(),
-    message: String(formData.get("message") ?? "").trim(),
-  };
-
-  try {
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!res.ok) {
-      setError("ارسال درخواست ناموفق بود. لطفاً دوباره تلاش کنید.");
-      return;
-    }
-
-    form.reset();
-    setFormOpen(false);
-    window.location.href = "/success";
-  } catch {
-    setError("مشکلی در ارتباط با سرور پیش آمد.");
-  } finally {
-    setSubmitting(false);
-  }
-};
-
-
+  
 
   return (
     <html lang="fa" dir="rtl">
