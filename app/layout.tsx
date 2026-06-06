@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, FormEvent, useEffect } from "react";
 import { AnimatePresence, motion, Variants } from "framer-motion";
+import { Analytics } from "@vercel/analytics/next"
+import Script from "next/script";
 
 
 
@@ -94,6 +96,21 @@ export default function RootLayout({
         style={{ "--accent": accent } as React.CSSProperties}
         className="bg-[#050505] text-white antialiased overflow-x-hidden"
       >
+
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+        strategy="afterInteractive"
+      />
+
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-XXXXXXXXXX');
+        `}
+      </Script>
+
         {/* GLOBAL SOFT GRADIENT */}
         <div className="pointer-events-none fixed inset-0 z-0">
           <div className="absolute top-[-250px] right-[-150px] h-[700px] w-[700px] rounded-full bg-[#2254f6]/15 blur-[140px]" />
