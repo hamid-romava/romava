@@ -97,19 +97,21 @@ export default function RootLayout({
         className="bg-[#050505] text-white antialiased overflow-x-hidden"
       >
 
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
-        strategy="afterInteractive"
-      />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+          strategy="afterInteractive"
+        />
 
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-0J0PJQKYNZ');
-        `}
-      </Script>
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-0J0PJQKYNZ');
+          `}
+        </Script>
+
+        <Analytics />
 
         {/* GLOBAL SOFT GRADIENT */}
         <div className="pointer-events-none fixed inset-0 z-0">
