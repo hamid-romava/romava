@@ -3,8 +3,10 @@
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { AnimatePresence, motion, Variants } from "framer-motion";
+
+
 
 export default function RootLayout({
   children,
@@ -13,6 +15,16 @@ export default function RootLayout({
 }) {
   const [formOpen, setFormOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+  const openModal = () => setFormOpen(true);
+
+  window.addEventListener("open-consult-modal", openModal);
+
+  return () => {
+    window.removeEventListener("open-consult-modal", openModal);
+  };
+}, []);
 
   const accent = "#2254f6";
 
@@ -48,7 +60,12 @@ export default function RootLayout({
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+
+    const data = {
+      name: String(formData.get("name") ?? "").trim(),
+      phone: String(formData.get("phone") ?? "").trim(),
+      message: String(formData.get("message") ?? "").trim(),
+    };
 
     try {
       const res = await fetch("/api/contact", {
@@ -69,6 +86,7 @@ export default function RootLayout({
       alert("خطا در ارتباط با سرور");
     }
   };
+
 
   return (
     <html lang="fa" dir="rtl">

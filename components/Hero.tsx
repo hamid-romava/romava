@@ -170,7 +170,7 @@ export default function Hero({
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 
                     <button
-                      onClick={onConsultClick}
+                      onClick={() => window.dispatchEvent(new Event("open-consult-modal"))}
                       className="group flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#2254f6] px-6 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                       رزرو وقت مشاوره
@@ -228,6 +228,12 @@ export default function Hero({
           </div>
         </div>
       </div>
+
+
     </section>
+
+
+
+
   );
 }
