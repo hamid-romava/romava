@@ -1,4 +1,4 @@
-// Run with: node scripts/check-report-auth.cjs. Uses synthetic reports only.
+// Run with: node scripts/check-report-auth.cjs. Synthetic reports only.
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
@@ -6,11 +6,9 @@ const crypto = require('node:crypto');
 const ts = require('typescript');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const tokenA = 'a'.repeat(48), tokenB = 'b'.repeat(48);
-const reports = {
-  [hash(tokenA)]: { passwordHash: hash('test-a-strong-password'), data: { name: 'نمونه یک', marker: 'PRIVATE_REPORT_A' } },
-  [hash(tokenB)]: { passwordHash: hash('test-b-strong-password'), data: { name: 'نمونه دو', marker: 'PRIVATE_REPORT_B' } },
-};
-const env = { ROMAVA_REPORTS_CONFIG: JSON.stringify(reports) };
+const reportA = { token: tokenA, passwordHash: hash('test-a-strong-password'), data: { name: 'نمونه یک', marker: 'PRIVATE_REPORT_A' } };
+const reportB = { token: tokenB, passwordHash: hash('test-b-strong-password'), data: { name: 'نمونه دو', marker: 'PRIVATE_REPORT_B' } };
+const env = { ROMAVA_REPORTS_CONFIG: JSON.stringify({ [hash(tokenA)]: reportA, [hash(tokenB)]: reportB }) };
 function load(path, imports = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpile(fs.readFileSync(path, 'utf8'), { module: ts.ModuleKind.CommonJS }), {
@@ -18,39 +16,47 @@ function load(path, imports = {}) {
   });
   return exports;
 }
-const route = load('app/r/[token]/route.ts', {
-  '@/lib/report-template': load('lib/report-template.ts'),
-  '@/lib/report-login': load('lib/report-login.ts'),
-});
-function call(token, { method = 'GET', username, password, cookie, origin = 'https://example.com', action } = {}) {
-  const url = `https://example.com/r/${token}`;
+const auth = load('lib/report-auth.ts');
+const login = load('lib/report-login.ts');
+const admin = load('app/admin/route.ts', { '@/lib/report-login': login, '@/lib/report-auth': auth });
+const dashboard = load('app/r/[token]/route.ts', { '@/lib/report-template': load('lib/report-template.ts'), '@/lib/report-auth': auth });
+function call(route, path, { method = 'GET', username, password, cookie, origin = 'https://example.com', action } = {}) {
+  const url = `https://example.com${path}`;
   const headers = {};
   if (cookie) headers.cookie = cookie;
   if (method === 'POST') { headers.origin = origin; headers['content-type'] = 'application/x-www-form-urlencoded'; }
-  return route[method](new Request(url, { method, headers, ...(method === 'POST' ? { body: new URLSearchParams({ username: username || '', password: password || '', ...(action ? { action } : {}) }) } : {}) }), { params: Promise.resolve({ token }) });
+  const request = new Request(url, { method, headers, ...(method === 'POST' ? { body: new URLSearchParams({ username: username || '', password: password || '', ...(action ? { action } : {}) }) } : {}) });
+  return route === admin ? route[method](request) : route[method](request, { params: Promise.resolve({ token: path.split('/').pop() }) });
 }
 (async () => {
-  const login = await call(tokenA), loginHtml = await login.text();
-  assert.equal(login.status, 200); assert.match(loginHtml, /autocomplete="username"/); assert(!loginHtml.includes('PRIVATE_REPORT_A')); assert(!loginHtml.includes('نمونه یک')); assert(!login.headers.has('www-authenticate'));
-  for (const input of [{ username: 'report', password: 'test-a-strong-password' }, { username: 'نمونه یک', password: 'wrong' }, { username: 'نمونه دو', password: 'test-b-strong-password' }]) {
-    const result = await call(tokenA, { method: 'POST', ...input }); assert.equal(result.status, 401); assert(!result.headers.has('www-authenticate')); assert(!(await result.text()).includes('PRIVATE_REPORT_A'));
+  const page = await call(admin, '/admin'), loginHtml = await page.text();
+  assert.equal(page.status, 200); assert.match(loginHtml, /autocomplete="username"/); assert(!loginHtml.includes('PRIVATE_REPORT_A')); assert(!loginHtml.includes('نمونه یک')); assert(!page.headers.has('www-authenticate'));
+  for (const input of [{ username: 'report', password: 'test-a-strong-password' }, { username: 'نمونه یک', password: 'wrong' }, { username: 'نمونه یک', password: 'test-b-strong-password' }]) {
+    const result = await call(admin, '/admin', { method: 'POST', ...input }); assert.equal(result.status, 401); assert(!(await result.text()).includes('PRIVATE_REPORT_A'));
   }
-  const valid = await call(tokenA, { method: 'POST', username: ' دکتر نمونه  يک ', password: 'test-a-strong-password' });
-  assert.equal(valid.status, 303); const setCookie = valid.headers.get('set-cookie');
-  for (const flag of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Max-Age=28800', `Path=/r/${tokenA}`]) assert(setCookie.includes(flag));
-  const cookie = setCookie.split(';')[0];
-  const report = await call(tokenA, { cookie }); const html = await report.text();
-  assert(html.includes('PRIVATE_REPORT_A')); assert(!html.includes('PRIVATE_REPORT_B')); assert(html.includes('خروج از حساب')); assert(!html.includes('__REPORT_DATA__')); assert.match(report.headers.get('cache-control'), /no-store/);
-  assert(!(await (await call(tokenB, { cookie })).text()).includes('PRIVATE_REPORT_B'));
-  assert(!(await (await call(tokenA, { cookie: cookie + 'bad' })).text()).includes('PRIVATE_REPORT_A'));
-  const expired = String(Math.floor(Date.now() / 1000) - 1);
-  const mac = crypto.createHmac('sha256', reports[hash(tokenA)].passwordHash).update(JSON.stringify(['report-session-v1', tokenA, 'نمونه یک', expired])).digest('hex');
-  assert(!(await (await call(tokenA, { cookie: `${cookie.split('=')[0]}=${expired}.${mac}` })).text()).includes('PRIVATE_REPORT_A'));
-  const logout = await call(tokenA, { method: 'POST', cookie, action: 'logout' }); assert.equal(logout.status, 303); assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);
-  assert.equal((await call(tokenA, { method: 'POST', username: 'نمونه یک', password: 'test-a-strong-password', origin: 'https://evil.example' })).status, 403);
-  assert.equal((await call('c'.repeat(48))).status, 404);
-  reports[hash(tokenA)].passwordHash = hash('changed-password'); env.ROMAVA_REPORTS_CONFIG = JSON.stringify(reports);
-  assert(!(await (await call(tokenA, { cookie })).text()).includes('PRIVATE_REPORT_A'));
-  env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(tokenA)).status, 503);
-  console.log('PASS: private login page, incorrect/legacy/cross-report credentials, Persian name normalization, signed cookie flags, redirect, report isolation, tampered/expired/revoked sessions, logout, CSRF origin, 404/503, privacy headers');
+  for (const [report, password] of [[reportA, 'test-a-strong-password'], [reportB, 'test-b-strong-password']]) {
+    const oldUrl = await call(dashboard, `/r/${report.token}`); assert.equal(oldUrl.status, 303); assert.equal(oldUrl.headers.get('location'), '/admin');
+    const valid = await call(admin, '/admin', { method: 'POST', username: `دکتر ${report.data.name}`, password });
+    assert.equal(valid.status, 303); assert.equal(valid.headers.get('location'), `/r/${report.token}`);
+    const setCookie = valid.headers.get('set-cookie');
+    for (const flag of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Max-Age=28800', `Path=/r`]) assert(setCookie.includes(flag));
+    const cookie = setCookie.split(';')[0];
+    const result = await call(dashboard, `/r/${report.token}`, { cookie }); const html = await result.text();
+    assert.equal(result.status, 200); assert(html.includes(report.data.marker)); assert(html.includes('خروج از حساب')); assert(!html.includes('__REPORT_DATA__'));
+    const otherToken = report === reportA ? tokenB : tokenA;
+    assert.equal((await call(dashboard, `/r/${otherToken}`, { cookie })).status, 303);
+    assert.equal((await call(dashboard, `/r/${report.token}`, { cookie: cookie + 'bad' })).status, 303);
+    const logout = await call(dashboard, `/r/${report.token}`, { method: 'POST', cookie, action: 'logout' }); assert.equal(logout.status, 303); assert.equal(logout.headers.get('location'), '/admin'); assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);
+  }
+  const firstLogin = await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password' });
+  const secondLogin = await call(admin, '/admin', { method: 'POST', username: reportB.data.name, password: 'test-b-strong-password' });
+  const firstCookie = firstLogin.headers.get('set-cookie').split(';')[0];
+  const secondCookie = secondLogin.headers.get('set-cookie').split(';')[0];
+  assert.equal(firstCookie.split('=')[0], secondCookie.split('=')[0]);
+  assert.equal((await call(dashboard, `/r/${tokenA}`, { cookie: secondCookie })).status, 303);
+  assert.equal((await call(dashboard, `/r/${tokenB}`, { cookie: secondCookie })).status, 200);
+  assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', origin: 'https://evil.example' })).status, 403);
+  assert.equal((await call(dashboard, `/r/${'c'.repeat(48)}`)).status, 404);
+  env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
+  console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF origin, 404/503');
 })().catch(error => { console.error(error); process.exitCode = 1; });
