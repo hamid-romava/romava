@@ -29,8 +29,7 @@ export async function POST(request: Request, { params }: Context) {
   const { token } = await params;
   const report = findReport(token);
   if (report instanceof Response) return report;
-  const url = new URL(request.url);
-  if (request.headers.get("origin") !== url.origin) return new Response("Forbidden", { status: 403, headers: reportHeaders });
+  if (!authenticated(request, report)) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: "/admin" } });
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Unsupported form", { status: 415, headers: reportHeaders });
   const form = await request.formData().catch(() => null);
   if (form?.get("action") !== "logout") return new Response("Bad request", { status: 400, headers: reportHeaders });

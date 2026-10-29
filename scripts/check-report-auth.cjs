@@ -20,12 +20,18 @@ const auth = load('lib/report-auth.ts');
 const login = load('lib/report-login.ts');
 const admin = load('app/admin/route.ts', { '@/lib/report-login': login, '@/lib/report-auth': auth });
 const dashboard = load('app/r/[token]/route.ts', { '@/lib/report-template': load('lib/report-template.ts'), '@/lib/report-auth': auth });
-function call(route, path, { method = 'GET', username, password, cookie, origin = 'https://example.com', action } = {}) {
+async function call(route, path, { method = 'GET', username, password, cookie, origin, action, omitCsrf = false } = {}) {
   const url = `https://example.com${path}`;
   const headers = {};
+  let csrf = '';
+  if (route === admin && method === 'POST' && !omitCsrf) {
+    const page = await admin.GET(new Request(url));
+    csrf = (await page.text()).match(/name="csrf" value="([a-f0-9]{48})"/)[1];
+    cookie = page.headers.get('set-cookie').split(';')[0];
+  }
   if (cookie) headers.cookie = cookie;
-  if (method === 'POST') { headers.origin = origin; headers['content-type'] = 'application/x-www-form-urlencoded'; }
-  const request = new Request(url, { method, headers, ...(method === 'POST' ? { body: new URLSearchParams({ username: username || '', password: password || '', ...(action ? { action } : {}) }) } : {}) });
+  if (method === 'POST') { if (origin) headers.origin = origin; headers['content-type'] = 'application/x-www-form-urlencoded'; }
+  const request = new Request(url, { method, headers, ...(method === 'POST' ? { body: new URLSearchParams({ username: username || '', password: password || '', ...(action ? { action } : {}), ...(csrf ? { csrf } : {}) }) } : {}) });
   return route === admin ? route[method](request) : route[method](request, { params: Promise.resolve({ token: path.split('/').pop() }) });
 }
 (async () => {
@@ -55,8 +61,9 @@ function call(route, path, { method = 'GET', username, password, cookie, origin 
   assert.equal(firstCookie.split('=')[0], secondCookie.split('=')[0]);
   assert.equal((await call(dashboard, `/r/${tokenA}`, { cookie: secondCookie })).status, 303);
   assert.equal((await call(dashboard, `/r/${tokenB}`, { cookie: secondCookie })).status, 200);
-  assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', origin: 'https://evil.example' })).status, 403);
+  assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', omitCsrf: true })).status, 403);
+  assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', origin: 'null' })).status, 303);
   assert.equal((await call(dashboard, `/r/${'c'.repeat(48)}`)).status, 404);
   env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
-  console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF origin, 404/503');
+  console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF token, 404/503');
 })().catch(error => { console.error(error); process.exitCode = 1; });
