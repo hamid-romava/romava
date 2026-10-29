@@ -1,11 +1,11 @@
-# Password-protected report dashboards
+# Private report dashboards
 
-`GET /r/<48-character random token>` serves a standalone dashboard after HTTP Basic authentication. The username is `report`; each report has a separate generated password. The browser displays its standard sign-in dialog.
+`GET /r/<48-character random token>` shows a Persian sign-in page inside the site. Each report uses the doctor's Persian `data.name` as its username and its existing generated password. Names accept an optional «دکتر» prefix, Arabic/Persian variants of ی and ک, and extra spaces. No report data or doctor name is included in the public sign-in HTML.
 
-Set `ROMAVA_REPORTS_CONFIG` in the hosting environment. Its value is a JSON object keyed by the SHA-256 digest of each random URL token. Each entry contains `passwordHash` (SHA-256 of a strong generated password) and `data` (the report fields used by the shared template). Report data and credentials must never be committed to this public repository. The local `.env.local` is ignored by Git.
+`POST` to the same URL validates the form, then redirects back with an eight-hour, signed, report-specific session cookie. Cookies are HttpOnly, SameSite=Strict, scoped to the report path, and Secure on HTTPS. Logout clears that report's cookie. Password/name changes revoke existing sessions. Basic authentication is no longer used, so browsers do not show a credential popup. POST requests require a matching Origin.
 
-Unknown tokens return 404. Missing or incorrect credentials return 401 without report data. Successful responses use `Cache-Control: private, no-store`, `X-Robots-Tag: noindex, nofollow, noarchive`, and `Referrer-Policy: no-referrer`. Authentication uses constant-time hash comparison. Use HTTPS in production. There is no public report index or report selector.
+Set `ROMAVA_REPORTS_CONFIG` in Vercel Production and Preview. It is a JSON object keyed by the SHA-256 digest of each random URL token, containing `passwordHash` (SHA-256 of a strong generated password) and `data` (shared-template report fields). Report data and credentials must never be committed to this public repository. `.env.local` is ignored by Git.
 
-Deploy the source through the existing Vercel project after adding the environment variable to Production (and Preview if needed), then redeploy. To revoke or change access, update the token digest or password hash in the environment variable and redeploy. Generated passwords have 144 bits of entropy; this implementation is intended for strong generated passwords, not short human-chosen passwords.
+Unknown tokens return 404. Incorrect credentials return the sign-in page with a generic error and status 401, without WWW-Authenticate or report data. All report responses disable caching, indexing, framing, and referrer disclosure. Authentication compares password hashes and session signatures in constant time. Use HTTPS and strong generated passwords in production. There is no public report index or report selector.
 
-Validation: production build; HTTP checks for missing, wrong, cross-report and correct passwords; unknown tokens; response privacy headers; homepage and font availability.
+Validation includes the production build, sign-in form, successful and failed login, report isolation, tampered/expired sessions, logout, Origin enforcement, privacy headers, and existing homepage/font availability.
