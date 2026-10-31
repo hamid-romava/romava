@@ -135,10 +135,10 @@ const handleSubmit = useCallback(
             <div className="flex items-center gap-8">
               <Link href="/" className="shrink-0">
                 <Image
-                  src="/romava-logo.png"
+                  src="/brand/romava-logo-focus.svg"
                   alt="Romava"
                   width={110}
-                  height={40}
+                  height={43}
                   className="object-contain"
                   priority
                 />
