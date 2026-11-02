@@ -1,0 +1,14 @@
+{
+  "phi": 1.618033988749895,
+  "large_radius": 100,
+  "small_radius": 61.80339887498948,
+  "center_distance": 61.80339887498948,
+  "bounds": [
+    0,
+    0,
+    223.60679774997897,
+    200
+  ],
+  "clear_space": 30.90169943749474,
+  "minimum_digital_symbol_height_px": 24
+}

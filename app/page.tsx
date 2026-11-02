@@ -395,6 +395,7 @@ function MainPage() {
 
               <ul className="mt-5 space-y-3 text-sm text-white/50">
                 <li>
+                  <a href="/brandbook" className="transition-colors hover:text-white">برندبوک</a>
                   <a href="/about" className="transition-colors hover:text-white">
                     درباره ما
                   </a>
