@@ -9,7 +9,8 @@ export const reportHeaders = {
 };
 export const htmlHeaders = { ...reportHeaders, "Content-Type": "text/html; charset=utf-8" };
 export const lifetime = 8 * 60 * 60;
-export type Report = { token: string; passwordHash: string; data: { name: string; [key: string]: unknown } };
+export type ReportData = { name: string; [key: string]: unknown };
+export type Report = { token: string; passwordHash: string; data: ReportData; months?: Record<string, ReportData> };
 export const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export const normalize = (value: string) => value.normalize("NFKC").replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[\s\u200c]+/g, " ").trim().replace(/^دکتر\s+/, "");
 export const username = (report: Report) => normalize(report.data.name);

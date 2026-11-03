@@ -8,6 +8,7 @@ const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const tokenA = 'a'.repeat(48), tokenB = 'b'.repeat(48);
 const reportA = { token: tokenA, passwordHash: hash('test-a-strong-password'), data: { name: 'نمونه یک', marker: 'PRIVATE_REPORT_A' } };
 const reportB = { token: tokenB, passwordHash: hash('test-b-strong-password'), data: { name: 'نمونه دو', marker: 'PRIVATE_REPORT_B' } };
+reportA.months = { '1': { ...reportA.data, period: 'ماه اول', followerGain: 111 }, '2': { ...reportA.data, period: 'ماه دوم', followerGain: 222 } };
 const env = { ROMAVA_REPORTS_CONFIG: JSON.stringify({ [hash(tokenA)]: reportA, [hash(tokenB)]: reportB }) };
 function load(path, imports = {}) {
   const exports = {};
@@ -19,6 +20,7 @@ function load(path, imports = {}) {
 const auth = load('lib/report-auth.ts');
 const login = load('lib/report-login.ts');
 const admin = load('app/admin/route.ts', { '@/lib/report-login': login, '@/lib/report-auth': auth });
+const preparation = load('app/r/preparation/route.ts', { '@/lib/preparation-template': load('lib/preparation-template.ts'), '@/lib/report-auth': auth });
 const dashboard = load('app/r/[token]/route.ts', { '@/lib/report-template': load('lib/report-template.ts'), '@/lib/report-auth': auth });
 async function call(route, path, { method = 'GET', username, password, cookie, origin, action, omitCsrf = false } = {}) {
   const url = `https://example.com${path}`;
@@ -57,6 +59,16 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   const firstLogin = await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password' });
   const secondLogin = await call(admin, '/admin', { method: 'POST', username: reportB.data.name, password: 'test-b-strong-password' });
   const firstCookie = firstLogin.headers.get('set-cookie').split(';')[0];
+  assert.equal((await preparation.GET(new Request('https://example.com/r/preparation'))).status, 303);
+  for (const [report, loginResponse] of [[reportA, firstLogin], [reportB, secondLogin]]) {
+    const response = await preparation.GET(new Request('https://example.com/r/preparation', { headers: { cookie: loginResponse.headers.get('set-cookie').split(';')[0] } }));
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert(html.includes('/r/' + report.token));
+    assert(html.includes(auth.hash('preparation-v1:' + report.token)));
+    assert.equal((html.match(/type="checkbox"/g) || []).length, 9);
+    assert(response.headers.get('Cache-Control').includes('no-store'));
+  }
   const secondCookie = secondLogin.headers.get('set-cookie').split(';')[0];
   assert.equal(firstCookie.split('=')[0], secondCookie.split('=')[0]);
   assert.equal((await call(dashboard, `/r/${tokenA}`, { cookie: secondCookie })).status, 303);
@@ -64,6 +76,16 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', omitCsrf: true })).status, 403);
   assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', origin: 'null' })).status, 303);
   assert.equal((await call(dashboard, `/r/${'c'.repeat(48)}`)).status, 404);
+  const monthCookie = firstLogin.headers.get('set-cookie').split(';')[0];
+  const monthOne = await dashboard.GET(new Request(`https://example.com/r/${tokenA}?month=1`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) });
+  assert.equal(monthOne.status, 200);
+  const monthHtml = await monthOne.text();
+  assert(monthHtml.includes('"followerGain":111'));
+  assert(!monthHtml.includes('"followerGain":222'));
+  const defaultMonth = await dashboard.GET(new Request(`https://example.com/r/${tokenA}`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) });
+  assert((await defaultMonth.text()).includes('"followerGain":222'));
+  assert.equal((await dashboard.GET(new Request(`https://example.com/r/${tokenA}?month=3`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) })).status, 404);
+  assert.equal((await dashboard.GET(new Request(`https://example.com/r/${tokenB}?month=1`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenB }) })).status, 303);
   env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
   console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF token, 404/503');
 })().catch(error => { console.error(error); process.exitCode = 1; });

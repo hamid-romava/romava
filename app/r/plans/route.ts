@@ -17,6 +17,6 @@ export async function GET(request: Request) {
   try { report = Object.values(reports()).find(item => authenticated(request, item)); }
   catch { return new Response("Reports unavailable", { status: 503, headers }); }
   if (!report) return new Response(null, { status: 303, headers: { ...headers, Location: "/admin" } });
-  const html = pricingTemplate().replace('<span class="private">', `<a class="private" href="/r/${report.token}">بازگشت به داشبورد ←</a><span class="private">`);
+  const html = pricingTemplate().replace('<span class="private">', `<a class="private dashboard-back" href="/r/${report.token}">بازگشت به داشبورد ←</a><span class="private">`);
   return new Response(html, { headers: { ...headers, "Content-Type": "text/html; charset=utf-8" } });
 }
