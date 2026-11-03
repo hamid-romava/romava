@@ -1,0 +1,34 @@
+[
+  {
+    "name": "BONE",
+    "hex": "#E8E3D7"
+  },
+  {
+    "name": "SAND",
+    "hex": "#C6B59D"
+  },
+  {
+    "name": "WARM GREY",
+    "hex": "#969387"
+  },
+  {
+    "name": "OLIVE",
+    "hex": "#73745A"
+  },
+  {
+    "name": "FOREST",
+    "hex": "#343C2F"
+  },
+  {
+    "name": "WOOD",
+    "hex": "#805C40"
+  },
+  {
+    "name": "HONEY",
+    "hex": "#B9915E"
+  },
+  {
+    "name": "CHARCOAL",
+    "hex": "#20221E"
+  }
+]
