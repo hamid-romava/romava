@@ -16,18 +16,17 @@ export async function GET(request: Request) {
   if (!teamAuthenticated(request)) return login(request);
   try {
     const rows = await listMeetings();
-    return new Response(page(`<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><form method="post"><input type="hidden" name="action" value="logout"><button class="logout">خروج</button></form></header><h1>قبل از جلسه، حرف‌هاش رو بخون.</h1><p>آخرین پاسخ‌های ذخیره‌شده کلاینت‌ها؛ هر ماه جدا نگه داشته می‌شه.</p>${rows.length ? rows.map(row => `<details class="card"><summary>${escape(row.doctorName)} · ${escape(row.cycle)}<br><small>آخرین ذخیره: ${escape(new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(row.updatedAt)))}</small></summary>${Object.entries(labels).map(([key,label])=>`<div class="answer"><h3>${label} ${row.ready[key] ? "✓" : ""}</h3><p>${escape(row.notes[key]) || "بدون یادداشت"}</p></div>`).join("")}</details>`).join("") : '<div class="card">هنوز پاسخی ذخیره نشده.</div>'}`), { headers });
+    return new Response(page(`<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><form method="post"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="${hash(readCookie(request, "romava_team_session") + ":logout")}"><button class="logout">خروج</button></form></header><h1>قبل از جلسه، حرف‌هاش رو بخون.</h1><p>آخرین پاسخ‌های ذخیره‌شده کلاینت‌ها؛ هر ماه جدا نگه داشته می‌شه.</p>${rows.length ? rows.map(row => `<details class="card"><summary>${escape(row.doctorName)} · ${escape(row.cycle)}<br><small>آخرین ذخیره: ${escape(new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(row.updatedAt)))}</small></summary>${Object.entries(labels).map(([key,label])=>`<div class="answer"><h3>${label} ${row.ready[key] ? "✓" : ""}</h3><p>${escape(row.notes[key]) || "بدون یادداشت"}</p></div>`).join("")}</details>`).join("") : '<div class="card">هنوز پاسخی ذخیره نشده.</div>'}`), { headers });
   } catch { return new Response(page('<p class="notice" role="alert">دریافت پاسخ‌ها فعلاً ممکن نیست. دوباره تلاش کن.</p>'), { status: 503, headers }); }
 }
 export async function POST(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
-  if (request.headers.get("origin") !== new URL(request.url).origin) return new Response("Forbidden", { status: 403, headers });
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Unsupported form", { status: 415, headers });
   const form = await request.formData();
-  if (form.get("action") === "logout" && teamAuthenticated(request)) return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings", "Set-Cookie": teamCookie(request, true) } });
+  if (form.get("action") === "logout" && teamAuthenticated(request) && form.get("csrf") === hash(readCookie(request, "romava_team_session") + ":logout")) return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings", "Set-Cookie": teamCookie(request, true) } });
   const csrf = readCookie(request, "romava_team_csrf");
-  if (!/^[a-f0-9]{48}$/.test(csrf) || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
+  if (!/^[a-f0-9]{48}$/.test(csrf) || form.get("csrf") !== csrf) return login(request, "فرم ورود منقضی شده. دوباره وارد شو.");
   const password = form.get("password");
-  if (form.get("username") !== "romava" || typeof password !== "string" || password.length > 256 || !equal(hash(password), process.env.ROMAVA_TEAM_PASSWORD_HASH!)) return login(request, "نام کاربری یا رمز عبور درست نیست.");
+  if (String(form.get("username") || "").trim().toLowerCase() !== "romava" || typeof password !== "string" || password.length > 256 || !equal(hash(password), process.env.ROMAVA_TEAM_PASSWORD_HASH!)) return login(request, "نام کاربری یا رمز عبور درست نیست.");
   return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings", "Set-Cookie": teamCookie(request) } });
 }

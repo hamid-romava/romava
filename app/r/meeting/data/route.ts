@@ -1,4 +1,4 @@
-import { authenticated, reportHeaders, reports } from "@/lib/report-auth";
+import { authenticated, meetingCsrf, reportHeaders, reports } from "@/lib/report-auth";
 import { clientMeetings, saveMeeting, validSession, validateAnswers } from "@/lib/meeting-store";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const report = account(request); if (!report) return json({ error: "unauthorized" }, 401);
-    if (request.headers.get("origin") !== new URL(request.url).origin) return json({ error: "forbidden" }, 403);
+    if (request.headers.get("x-csrf-token") !== meetingCsrf(request)) return json({ error: "forbidden" }, 403);
     if (!request.headers.get("content-type")?.startsWith("application/json")) return json({ error: "invalid_content_type" }, 415);
     if (Number(request.headers.get("content-length") || 0) > 150000) return json({ error: "too_large" }, 413);
     const text = await request.text(); if (text.length > 60000) return json({ error: "too_large" }, 413);

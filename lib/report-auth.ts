@@ -42,3 +42,8 @@ export function createSession(request: Request, report: Report) {
   const expiry = String(Math.floor(Date.now() / 1000) + lifetime);
   return sessionCookie(request, report, `${expiry}.${signature(report, expiry)}`, lifetime);
 }
+
+export function meetingCsrf(request: Request) {
+  const session = (request.headers.get("cookie") || "").split(";").map(value => value.trim()).find(value => value.startsWith("romava_report_session=")) || "";
+  return hash(session + ":meeting-submit-v1");
+}
