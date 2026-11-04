@@ -20,6 +20,7 @@ function load(path, imports = {}) {
 const auth = load('lib/report-auth.ts');
 const login = load('lib/report-login.ts');
 const admin = load('app/admin/route.ts', { '@/lib/report-login': login, '@/lib/report-auth': auth });
+const meeting = load('app/r/meeting/route.ts', { '@/lib/meeting-template': load('lib/meeting-template.ts'), '@/lib/report-auth': auth, '@/lib/meeting-store': { currentCycle: () => '2026-11' } });
 const preparation = load('app/r/preparation/route.ts', { '@/lib/preparation-template': load('lib/preparation-template.ts'), '@/lib/report-auth': auth });
 const dashboard = load('app/r/[token]/route.ts', { '@/lib/report-template': load('lib/report-template.ts'), '@/lib/report-auth': auth });
 async function call(route, path, { method = 'GET', username, password, cookie, origin, action, omitCsrf = false } = {}) {
@@ -76,6 +77,17 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', omitCsrf: true })).status, 403);
   assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password', origin: 'null' })).status, 303);
   assert.equal((await call(dashboard, `/r/${'c'.repeat(48)}`)).status, 404);
+  assert.equal((await meeting.GET(new Request('https://example.com/r/meeting'))).status, 303);
+  for (const [report, loginResponse] of [[reportA, firstLogin], [reportB, secondLogin]]) {
+    const response = await meeting.GET(new Request('https://example.com/r/meeting', { headers: { cookie: loginResponse.headers.get('set-cookie').split(';')[0] } }));
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert(html.includes('/r/' + report.token));
+    assert(html.includes(auth.hash('meeting-v1:' + report.token)));
+    assert(!html.includes(auth.hash('meeting-v1:' + (report === reportA ? tokenB : tokenA))));
+    assert.equal((html.match(/<textarea /g) || []).length, 5);
+    assert(response.headers.get('Cache-Control').includes('no-store'));
+  }
   const monthCookie = firstLogin.headers.get('set-cookie').split(';')[0];
   const monthOne = await dashboard.GET(new Request(`https://example.com/r/${tokenA}?month=1`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) });
   assert.equal(monthOne.status, 200);
