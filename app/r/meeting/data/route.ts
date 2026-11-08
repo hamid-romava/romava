@@ -1,3 +1,4 @@
+import { reportMeetingMonth, meetingMonthTitle } from "@/lib/meeting-booking";
 import { authenticated, meetingCsrf, reportHeaders, reports } from "@/lib/report-auth";
 import { clientMeetings, saveMeeting, validSession, validateAnswers } from "@/lib/meeting-store";
 export const runtime = "nodejs";
@@ -18,9 +19,11 @@ export async function PUT(request: Request) {
     if (!request.headers.get("content-type")?.startsWith("application/json")) return json({ error: "invalid_content_type" }, 415);
     if (Number(request.headers.get("content-length") || 0) > 150000) return json({ error: "too_large" }, 413);
     const text = await request.text(); if (text.length > 60000) return json({ error: "too_large" }, 413);
-    const input = JSON.parse(text), answers = validateAnswers(input);
+    const input = JSON.parse(text), answers = validateAnswers(input, true);
     if (!answers || !validSession(input.sessionId)) return json({ error: "invalid_answers" }, 400);
-    const saved = await saveMeeting(report.token, report.data.name, input.sessionId, answers);
+    const reportMonth = reportMeetingMonth(report);
+    if (input.reportMonth !== reportMonth) return json({ error: "report_month_changed" }, 422);
+    const saved = await saveMeeting(report.token, report.data.name, input.sessionId, answers, { reportMonth, renewalMonth: reportMonth + 1, meetingTitle: meetingMonthTitle(reportMonth) });
     return saved ? json(saved) : json({ error: "already_submitted" }, 409);
   } catch (error) { return json({ error: error instanceof SyntaxError ? "invalid_json" : "storage_unavailable" }, error instanceof SyntaxError ? 400 : 503); }
 }
