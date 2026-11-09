@@ -28,7 +28,7 @@ console.log('PASS meeting sync: authenticated account, origin/validation, persis
 assert.equal(booking.tehranToday(new Date('2026-11-08T21:00:00Z')),'2026-11-09');
 const valid={plan:'bamboo',shootDate:'2026-11-11',shootSlot:'afternoon',paymentModel:'split',firstPaymentDate:'2026-11-08',secondPaymentDate:'2026-11-22'};
 assert.equal(booking.validateBooking(valid,'2026-11-08').secondPaymentDate,'2026-11-22');
-for(const patch of [{shootDate:'2026-11-10'},{shootDate:'2026-11-16'},{firstPaymentDate:'2026-11-07'},{firstPaymentDate:'2026-11-11'},{shootDate:'2026-02-30'},{plan:'other'},{shootSlot:'night'},{paymentModel:'credit'}])assert.equal(booking.validateBooking({...valid,...patch},'2026-11-08'),null);
+for(const patch of [{shootDate:'2026-11-10'},{shootDate:'2026-11-16'},{firstPaymentDate:'2026-11-07'},{firstPaymentDate:'2026-11-10'},{firstPaymentDate:'2026-11-11'},{shootDate:'2026-02-30'},{plan:'other'},{shootSlot:'night'},{paymentModel:'credit'}])assert.equal(booking.validateBooking({...valid,...patch},'2026-11-08'),null);
 assert.equal(booking.validateBooking({...valid,paymentModel:'full'},'2026-11-08').secondPaymentDate,null);
 assert.equal(booking.addDays('2026-12-25',14),'2027-01-08');assert.equal(booking.reportMeetingMonth({months:{'1':{},'2':{}}}),2);
 
@@ -40,3 +40,5 @@ assert(booking.validateBooking({...valid,shootDate:'2026-11-15'},'2026-11-08'));
 for(const secondPaymentDate of [null,'2026-11-08','2026-11-07','2026-11-23'])assert.equal(booking.validateBooking({...valid,secondPaymentDate},'2026-11-08'),null);assert.equal(booking.validateBooking({...valid,secondPaymentDate:'2026-11-09'},'2026-11-08').secondPaymentDate,'2026-11-09');
 
 assert.equal(booking.validateBooking({...valid,totalPrice:1,firstPaymentAmount:1},'2026-11-08').totalPrice,87000000);assert.equal(booking.validateBooking(valid,'2026-11-08').firstPaymentAmount,43500000);assert.equal(booking.validateBooking({...valid,paymentModel:'full'},'2026-11-08').firstPaymentAmount,87000000);assert.equal(booking.validateBooking({...valid,paymentModel:'full'},'2026-11-08').secondPaymentAmount,null);
+
+assert(booking.validateBooking({...valid,firstPaymentDate:'2026-11-09'},'2026-11-08'));
