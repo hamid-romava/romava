@@ -68,7 +68,7 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
     const html = await response.text();
     assert(html.includes('/r/' + report.token));
     assert(html.includes(auth.hash('preparation-v1:' + report.token)));
-    assert.equal((html.match(/type="checkbox"/g) || []).length, 9);
+    assert.equal((html.match(/type="checkbox"/g) || []).length, 12);
     assert(response.headers.get('Cache-Control').includes('no-store'));
   }
   const secondCookie = secondLogin.headers.get('set-cookie').split(';')[0];
