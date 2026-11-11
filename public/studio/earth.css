@@ -340,3 +340,26 @@ body > header button[data-contact]:hover,
 @media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
   #approach .adv-layout { gap: 18px; }
 }
+
+#approach,
+#approach .adv-pin { background: var(--forest); color: #fdfcfb; }
+#approach .section-kicker,
+#approach .taam-note,
+#approach .adv-hint,
+#approach .adv-count,
+#approach .adv-step:not(.active) { color: #d1d4ca; }
+#approach .section-kicker,
+#approach .adv-step { border-color: #fdfcfb30; }
+#approach .section-kicker::before { background: var(--forest); }
+#approach .adv-menu h2 span,
+#approach .adv-step.active,
+#approach .startup-more { color: #ead5b7; }
+#approach .adv-panel p { color: #e7e8e0; }
+#approach .adv-service,
+#approach .adv-step > span { background: #fdfcfb18; color: #fdfcfb; }
+#approach .adv-step.active > span { background: #ead5b7; color: var(--forest); }
+#approach .adv-stage::before { border-color: #ead5b75c; }
+#approach .adv-stage::after { border-color: #ead5b73d; }
+#approach .adv-progress { background: #fdfcfb30; }
+#approach :is(.crayon-icon, .adv-scene) { filter: grayscale(1) invert(1); }
+#approach :focus-visible { outline-color: #ead5b7; }
