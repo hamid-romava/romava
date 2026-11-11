@@ -13,6 +13,34 @@ const request=(payload,extra={})=>new Request('https://example.com/r/meeting/dat
 assert.equal((await route.PUT(request({...input,reportMonth:2}))).status,422);
 const response=await route.GET(new Request('https://example.com/r/meeting/data',{headers:{cookie}}));const saved=(await response.json()).sessions[0];assert.equal(saved.notes.liked,'متن تست');assert.equal(saved.booking.secondPaymentDate,booking.addDays(booking.tehranToday(),10));assert.equal(saved.reportMonth,1);assert.equal(saved.renewalMonth,2);const team=load('lib/team-auth.ts',{'@/lib/report-auth':auth});assert(!team.teamAuthenticated(new Request('https://example.com/team/meetings',{headers:{cookie}})));const teamCookie=team.teamCookie(new Request('https://example.com/team/meetings')).split(';')[0];assert(team.teamAuthenticated(new Request('https://example.com/team/meetings',{headers:{cookie:teamCookie}})));assert(!team.teamAuthenticated(new Request('https://example.com/team/meetings',{headers:{cookie:teamCookie+'x'}})));env.ROMAVA_TEAM_PASSWORD_HASH=auth.hash('team-test-password');
 const teamRoute=load('app/team/meetings/route.ts',{'@/lib/report-auth':auth,'@/lib/team-auth':team,'@/lib/meeting-store':{listMeetings:async()=>[]},'@/lib/meeting-booking':booking});
+const requestsUrl = 'https://example.com/team/meetings?view=requests';
+let contactReads = 0;
+const cursor = {
+  sort() { return this; }, skip() { return this; }, limit() { return this; },
+  async toArray() { contactReads++; return [{ name: 'درخواست نمونه', message: '<script>example</script>', phone: '09120000000' }]; },
+};
+const requestsRoute = load('app/team/meetings/route.ts', {
+  '@/lib/report-auth': auth, '@/lib/team-auth': team, '@/lib/meeting-booking': booking,
+  '@/lib/meeting-store': { listMeetings: async () => [] },
+  '@/lib/mongodb': { default: Promise.resolve({ db: name => {
+    assert.equal(name, 'mydb');
+    return { collection: name => {
+      assert.equal(name, 'contacts');
+      return { find: () => cursor };
+    }};
+  }}) },
+});
+const denied = await requestsRoute.GET(new Request(requestsUrl));
+assert(!(await denied.text()).includes('درخواست نمونه'));
+assert.equal(contactReads, 0);
+const authorizedCookie = team.teamCookie(new Request(requestsUrl)).split(';')[0];
+const requests = await requestsRoute.GET(new Request(requestsUrl, { headers: { cookie: authorizedCookie } }));
+assert.equal(requests.status, 200);
+assert.match(requests.headers.get('cache-control'), /no-store/);
+const requestsHtml = await requests.text();
+assert(requestsHtml.includes('درخواست نمونه'));
+assert(requestsHtml.includes('&lt;script&gt;example&lt;/script&gt;'));
+assert.equal(contactReads, 1);
 const loginPage=await teamRoute.GET(new Request('https://example.com/team/meetings'));
 const nonce=(await loginPage.text()).match(/name="csrf" value="([a-f0-9]+)"/)[1];
 const loginCookie=loginPage.headers.get('set-cookie').split(';')[0];
