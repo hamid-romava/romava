@@ -374,3 +374,18 @@ body > header button[data-contact]:hover,
   white-space: nowrap;
 }
 .hero-romava-link:hover { background: #c5a373; }
+
+main :is(h1, h2, h3) > .heading-lead {
+  display: block;
+  color: inherit;
+  font-size: .64em;
+  font-weight: 400;
+  line-height: 1.45;
+  margin-block-end: .22em;
+}
+.case-runway .case-carousel .outcome-card > p {
+  color: #cbd0c4;
+  font-size: clamp(12px, 1.1vw, 14px);
+  line-height: 1.85;
+}
+.case-runway .outcome-card > p b { font-weight: 400; }
