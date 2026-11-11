@@ -365,15 +365,13 @@ body > header button[data-contact]:hover,
 #approach :focus-visible { outline-color: #ead5b7; }
 
 .hero-romava-link {
-  display: inline-block;
-  background: var(--honey);
   color: var(--ink);
-  border-radius: 6px;
-  padding-inline: 8px;
   font-weight: 700;
-  white-space: nowrap;
+  background: radial-gradient(ellipse at center, #b9915e66 0%, #b9915e30 53%, transparent 76%) center 70% / 100% 1.25em no-repeat;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
-.hero-romava-link:hover { background: #c5a373; }
+.hero-romava-link:hover { text-decoration: underline; text-underline-offset: .2em; }
 
 main :is(h1, h2, h3) > .heading-lead {
   display: block;
