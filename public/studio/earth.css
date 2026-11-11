@@ -363,3 +363,14 @@ body > header button[data-contact]:hover,
 #approach .adv-progress { background: #fdfcfb30; }
 #approach :is(.crayon-icon, .adv-scene) { filter: grayscale(1) invert(1); }
 #approach :focus-visible { outline-color: #ead5b7; }
+
+.hero-romava-link {
+  display: inline-block;
+  background: var(--honey);
+  color: var(--ink);
+  border-radius: 6px;
+  padding-inline: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.hero-romava-link:hover { background: #c5a373; }
