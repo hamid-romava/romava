@@ -307,3 +307,67 @@ body > header button[data-contact]:hover,
 #contact-form button { background: var(--forest); }
 #contact-form button:disabled { opacity: .65; cursor: wait; }
 #contact-status:empty { display: none; }
+
+/* The sticky deck occupies one full-width track, even while cards overlap. */
+.case-runway .outcome-grid { grid-template-columns: minmax(0, 1fr); }
+.case-runway .outcome-card { min-width: 0; }
+.case-runway .case-pair { grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr); }
+.case-runway .case-pair > div:first-child b {
+  color: #d1d4ca;
+  font-size: .86em;
+  font-weight: 400;
+}
+.case-runway .case-pair > div:last-child b { color: #fff; font-weight: 700; }
+
+#problem .empathy-intro h2 { font-size: clamp(16px, 2vw, 22px); color: #cececf; }
+#problem .empathy-intro h2 span {
+  margin-top: 9px;
+  font-size: clamp(26px, 3.3vw, 38px);
+  line-height: 1.45;
+  color: #fafafa;
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .case-runway .case-carousel .abdi.active { column-gap: 28px; }
+  .case-runway .case-carousel .abdi .case-impact {
+    grid-template-columns: 95px minmax(0, 1fr);
+    column-gap: 12px;
+  }
+  .case-runway .case-carousel .abdi .case-impact .case-proof { width: 95px; }
+  .case-runway .case-carousel .abdi .case-impact > strong { font-size: clamp(50px, 7vw, 72px); }
+}
+
+@media (max-width: 760px) {
+  #approach.adv-scroll { height: auto; }
+  #approach .adv-pin {
+    position: static;
+    height: auto;
+    min-height: 0;
+    padding-block: 48px;
+    overflow: visible;
+  }
+  #approach .adv-shell .section-kicker { margin-bottom: 20px; }
+  #approach .adv-layout { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  #approach .adv-stage {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #fdfcfb;
+    padding: 20px 16px;
+  }
+  #approach .adv-stage::before, #approach .adv-stage::after { display: none; }
+  #approach .adv-hint { display: none; }
+  #approach .adv-progress { margin-top: 16px; }
+}
+
+@media (max-width: 760px) {
+  #approach .adv-panel { display: none; }
+  #approach .adv-panel.active {
+    display: flex;
+    position: relative;
+    min-height: 0;
+    border: 0;
+  }
+}
