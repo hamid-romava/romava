@@ -337,37 +337,6 @@ body > header button[data-contact]:hover,
   .case-runway .case-carousel .abdi .case-impact > strong { font-size: clamp(50px, 7vw, 72px); }
 }
 
-@media (max-width: 760px) {
-  #approach.adv-scroll { height: auto; }
-  #approach .adv-pin {
-    position: static;
-    height: auto;
-    min-height: 0;
-    padding-block: 48px;
-    overflow: visible;
-  }
-  #approach .adv-shell .section-kicker { margin-bottom: 20px; }
-  #approach .adv-layout { grid-template-columns: minmax(0, 1fr); gap: 26px; }
-  #approach .adv-stage {
-    width: 100%;
-    max-width: none;
-    min-height: 0;
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: #fdfcfb;
-    padding: 20px 16px;
-  }
-  #approach .adv-stage::before, #approach .adv-stage::after { display: none; }
-  #approach .adv-hint { display: none; }
-  #approach .adv-progress { margin-top: 16px; }
-}
-
-@media (max-width: 760px) {
-  #approach .adv-panel { display: none; }
-  #approach .adv-panel.active {
-    display: flex;
-    position: relative;
-    min-height: 0;
-    border: 0;
-  }
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  #approach .adv-layout { gap: 18px; }
 }

@@ -1,6 +1,6 @@
 // A normal sticky section, not a wheel-event trap: scroll also works backwards.
 const advSection=document.querySelector('.adv-scroll'),advButtons=[...document.querySelectorAll('[data-adv]')],advPanels=[...document.querySelectorAll('[data-adv-panel]')];
-const scrollAdvantages = matchMedia("(min-width: 761px) and (prefers-reduced-motion: no-preference)");
+const scrollAdvantages = matchMedia("(prefers-reduced-motion: no-preference)");
 let advCurrent=-1,advQueued=false;
 function showAdv(index){index=Math.max(0,Math.min(4,index));if(index===advCurrent)return;advCurrent=index;advButtons.forEach((b,i)=>{b.classList.toggle('active',i===index);b.setAttribute('aria-pressed',String(i===index))});advPanels.forEach((p,i)=>{p.classList.toggle('active',i===index);p.setAttribute('aria-hidden',String(i!==index))});document.querySelector('.adv-progress>span').style.width=((index+1)*20)+'%'}
 function updateAdv(){advQueued=false;if(!scrollAdvantages.matches){if(advCurrent<0)showAdv(0);return;}const r=advSection.getBoundingClientRect(),travel=advSection.offsetHeight-innerHeight;showAdv(Math.floor(Math.max(0,Math.min(.9999,-r.top/Math.max(1,travel)))*5))}
