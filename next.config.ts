@@ -1,7 +1,22 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: "/", destination: "/studio/index.html" },
+        { source: "/about", destination: "/studio/about.html" },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
+  async headers() {
+    return [{
+      source: "/version-zero/:path*",
+      headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+    }];
+  },
 };
 
 export default nextConfig;

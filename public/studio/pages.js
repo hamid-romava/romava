@@ -1,0 +1,1 @@
+document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',async()=>{const status=document.querySelector('#copy-status');try{await navigator.clipboard.writeText(b.dataset.color);status.textContent='کد رنگ کپی شد: '+b.dataset.color}catch{status.textContent='کد رنگ: '+b.dataset.color}}));
