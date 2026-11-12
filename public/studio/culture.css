@@ -100,3 +100,24 @@
   display: block;
 }
 .culture-hero .culture-art { height: auto; }
+
+@font-face {
+  font-family: "Yekan Brandbook";
+  src: url("/brandbook/assets/YekanBakh-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Yekan Brandbook";
+  src: url("/brandbook/assets/YekanBakh-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-display: swap;
+}
+.culture-comparison h2,
+.culture-columns,
+.culture-table summary {
+  font-family: "Yekan Brandbook", Arial, sans-serif;
+}
+.culture-comparison h2,
+.culture-columns b { font-weight: 300; }
+.culture-table summary span:first-child { font-weight: 400; }
