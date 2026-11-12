@@ -56,18 +56,47 @@
 
 .culture-values {
   display: grid;
-  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: clamp(18px, 7vw, 90px);
+  gap: 12px;
   border-top: 1px solid var(--line);
 }
 .culture-values ul { list-style: none; margin: 0; padding: 0; }
-.culture-values li { line-height: 2; padding: 12px 0; }
+.culture-values li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  line-height: 2;
+  padding: 14px 0;
+}
+.culture-values li svg {
+  display: block;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border-radius: 10px;
+  background: #eeebe6;
+  color: var(--forest);
+}
 .culture-values li + li { border-top: 1px solid var(--line); }
 
 @media (max-width: 680px) {
   .culture-values, .culture-explanation { grid-template-columns: minmax(0, 1fr); }
   .culture-values h2 { margin-bottom: 0; }
   .culture-table summary { font-size: 14px; }
-  .culture-hero .about-art { height: clamp(210px, 65vw, 300px); }
 }
+
+.culture-hero h1, .culture-comparison, .culture-values {
+  font-family: Yekan, sans-serif;
+  letter-spacing: normal;
+}
+.culture-table summary, .culture-explanation p { font-family: inherit; }
+.culture-table details[open] summary > span { transform: none; }
+.culture-hero .culture-art {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+  display: block;
+}
+.culture-hero .culture-art { height: auto; }
