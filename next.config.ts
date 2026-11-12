@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
       beforeFiles: [
         { source: "/", destination: "/studio/index.html" },
         { source: "/about", destination: "/studio/about.html" },
+        { source: "/culture", destination: "/studio/culture.html" },
       ],
       afterFiles: [],
       fallback: [],

@@ -1,0 +1,73 @@
+.culture-hero h1 {
+  font-size: clamp(31px, 4.3vw, 66px);
+  line-height: 1.45;
+}
+.culture-hero .page-hero-grid > div { min-width: 0; }
+
+.culture-comparison h2, .culture-values h2 {
+  font-size: clamp(26px, 3.2vw, 46px);
+  line-height: 1.45;
+  margin: 0 0 18px;
+}
+.culture-comparison > p { color: var(--muted); }
+.culture-table {
+  margin-top: 28px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fdfcfb;
+}
+.culture-columns, .culture-table summary, .culture-explanation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 3vw, 42px);
+  padding: 16px clamp(14px, 3.5vw, 36px);
+  padding-inline-end: clamp(34px, 6vw, 64px);
+}
+.culture-columns {
+  background: var(--forest);
+  color: #fff;
+}
+.culture-table details + details { border-top: 1px solid var(--line); }
+.culture-table summary {
+  position: relative;
+  align-items: center;
+  min-height: 68px;
+  cursor: pointer;
+  list-style: none;
+  line-height: 1.65;
+}
+.culture-table summary::-webkit-details-marker { display: none; }
+.culture-table summary::after {
+  content: "+";
+  position: absolute;
+  inset-inline-end: clamp(12px, 3vw, 30px);
+  color: var(--wood);
+  font-size: 22px;
+}
+.culture-table details[open] summary::after { content: "−"; }
+.culture-table summary:hover, .culture-table details[open] summary { background: #eeebe6; }
+.culture-table summary:focus-visible { outline-offset: -4px; }
+.culture-table summary span:first-child { font-weight: 700; color: var(--forest); }
+.culture-table summary span:nth-child(2) { color: var(--muted); }
+.culture-explanation { border-top: 1px solid var(--line); line-height: 1.9; }
+.culture-explanation p { margin: 0; font-size: 14px; }
+.culture-explanation b { display: block; color: var(--wood); margin-bottom: 4px; }
+
+.culture-values {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: clamp(18px, 7vw, 90px);
+  border-top: 1px solid var(--line);
+}
+.culture-values ul { list-style: none; margin: 0; padding: 0; }
+.culture-values li { line-height: 2; padding: 12px 0; }
+.culture-values li + li { border-top: 1px solid var(--line); }
+
+@media (max-width: 680px) {
+  .culture-values, .culture-explanation { grid-template-columns: minmax(0, 1fr); }
+  .culture-values h2 { margin-bottom: 0; }
+  .culture-table summary { font-size: 14px; }
+  .culture-hero .about-art { height: clamp(210px, 65vw, 300px); }
+}
