@@ -2,7 +2,12 @@ import { plans } from "./pricing-plans";
 const planIds: Record<string, string> = { base: "seed", vangogh: "cypress", davinci: "bamboo" };
 export const meetingPlans = plans.map(plan => ({ id: planIds[plan.kind], name: plan.name, description: plan.purpose, priceToman: Number(plan.price.replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))) * 1000000 }));
 
-export type MeetingBooking = { plan: string; shootDate: string; shootSlot: "morning" | "afternoon"; paymentModel: "full" | "split"; firstPaymentDate: string; secondPaymentDate: string | null; totalPrice?: number; firstPaymentAmount?: number; secondPaymentAmount?: number | null };
+export function renewalPrice(plan: typeof meetingPlans[number], months: 1 | 3) {
+  const discount = months === 3 ? ({ cypress: 5, bamboo: 10 } as Record<string, number>)[plan.id] ?? 0 : 0;
+  return Math.round(plan.priceToman * months * (100 - discount) / 100);
+}
+
+export type MeetingBooking = { renewalMonths?: 1 | 3; plan: string; shootDate: string; shootSlot: "morning" | "afternoon"; paymentModel: "full" | "split"; firstPaymentDate: string; secondPaymentDate: string | null; totalPrice?: number; firstPaymentAmount?: number; secondPaymentAmount?: number | null };
 export function tehranToday(now = new Date()) {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tehran", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
   return ["year", "month", "day"].map(type => parts.find(p => p.type === type)!.value).join("-");
@@ -14,13 +19,15 @@ export function validateBooking(input: unknown, today = tehranToday()): MeetingB
   const b = input as Record<string, unknown>;
   if (!meetingPlans.some(plan => plan.id === b.plan) || !validDate(b.shootDate) || b.shootDate < addDays(today, 3) || b.shootDate > addDays(today, 7) || !["morning", "afternoon"].includes(String(b.shootSlot)) || !["full", "split"].includes(String(b.paymentModel)) || !validDate(b.firstPaymentDate) || b.firstPaymentDate < today || b.firstPaymentDate > addDays(b.shootDate, -2)) return null;
   if (b.paymentModel === "split" && (!validDate(b.secondPaymentDate) || b.secondPaymentDate <= b.firstPaymentDate || b.secondPaymentDate > addDays(b.firstPaymentDate, 14))) return null;
-  const totalPrice = meetingPlans.find(plan => plan.id === b.plan)!.priceToman;
-  return { totalPrice, firstPaymentAmount: b.paymentModel === "split" ? totalPrice / 2 : totalPrice, secondPaymentAmount: b.paymentModel === "split" ? totalPrice / 2 : null, plan: String(b.plan), shootDate: b.shootDate, shootSlot: b.shootSlot as MeetingBooking["shootSlot"], paymentModel: b.paymentModel as MeetingBooking["paymentModel"], firstPaymentDate: b.firstPaymentDate, secondPaymentDate: b.paymentModel === "split" ? String(b.secondPaymentDate) : null };
+  const renewalMonths = b.renewalMonths ?? 1;
+  if (renewalMonths !== 1 && renewalMonths !== 3) return null;
+  const totalPrice = renewalPrice(meetingPlans.find(plan => plan.id === b.plan)!, renewalMonths);
+  return { renewalMonths, totalPrice, firstPaymentAmount: b.paymentModel === "split" ? totalPrice / 2 : totalPrice, secondPaymentAmount: b.paymentModel === "split" ? totalPrice / 2 : null, plan: String(b.plan), shootDate: b.shootDate, shootSlot: b.shootSlot as MeetingBooking["shootSlot"], paymentModel: b.paymentModel as MeetingBooking["paymentModel"], firstPaymentDate: b.firstPaymentDate, secondPaymentDate: b.paymentModel === "split" ? String(b.secondPaymentDate) : null };
 }
 export function bookingLines(b: MeetingBooking) {
   const date = (value: string) => new Intl.DateTimeFormat("fa-IR", { dateStyle: "long", timeZone: "Asia/Tehran" }).format(new Date(value + "T12:00:00Z"));
   const money = (value: number | undefined) => value === undefined ? "" : ` · ${new Intl.NumberFormat("fa-IR").format(value)} تومان`;
-  return [`طرح ${meetingPlans.find(p => p.id === b.plan)?.name || b.plan}${money(b.totalPrice)}`, `آفیش پیشنهادی: ${date(b.shootDate)} · ${b.shootSlot === "morning" ? "۱۰ تا ۱۴" : "۱۶ تا ۲۰"}`, b.paymentModel === "split" ? `پرداخت ۵۰–۵۰ · قسط اول: ${date(b.firstPaymentDate)}${money(b.firstPaymentAmount)} · قسط دوم: ${date(b.secondPaymentDate!)}${money(b.secondPaymentAmount ?? undefined)}` : `پرداخت کامل: ${date(b.firstPaymentDate)}${money(b.firstPaymentAmount)}`].join("\n");
+  return [`طرح ${meetingPlans.find(p => p.id === b.plan)?.name || b.plan} · ${b.renewalMonths === 3 ? "سه‌ماهه" : "ماهانه"}${money(b.totalPrice)}`, `آفیش پیشنهادی: ${date(b.shootDate)} · ${b.shootSlot === "morning" ? "۱۰ تا ۱۴" : "۱۶ تا ۲۰"}`, b.paymentModel === "split" ? `پرداخت ۵۰–۵۰ · قسط اول: ${date(b.firstPaymentDate)}${money(b.firstPaymentAmount)} · قسط دوم: ${date(b.secondPaymentDate!)}${money(b.secondPaymentAmount ?? undefined)}` : `پرداخت کامل: ${date(b.firstPaymentDate)}${money(b.firstPaymentAmount)}`].join("\n");
 }
 
 export function reportMeetingMonth(report: { months?: Record<string, unknown> }) { return Math.max(1, ...Object.keys(report.months || {}).filter(key => /^[1-9]\d*$/.test(key)).map(Number)); }
