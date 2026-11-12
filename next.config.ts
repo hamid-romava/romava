@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
         { source: "/", destination: "/studio/index.html" },
         { source: "/about", destination: "/studio/about.html" },
         { source: "/culture", destination: "/studio/culture.html" },
+        { source: "/careers", destination: "/studio/careers.html" },
+        { source: "/careers/video-editor", destination: "/studio/career-video-editor.html" },
       ],
       afterFiles: [],
       fallback: [],
