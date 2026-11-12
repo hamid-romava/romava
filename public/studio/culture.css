@@ -121,3 +121,28 @@
 .culture-comparison h2,
 .culture-columns b { font-weight: 300; }
 .culture-table summary span:first-child { font-weight: 400; }
+
+.culture-hero .page-hero-grid {
+  grid-template-columns: minmax(0, .84fr) minmax(0, 1.16fr);
+  gap: 0;
+}
+.culture-hero-copy {
+  position: relative;
+  z-index: 1;
+  margin-inline-end: -32px;
+  padding: clamp(24px, 4vw, 56px);
+  background: #fdfcfb;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 14px 48px #20221e12;
+}
+.culture-hero .culture-art {
+  border-radius: 18px;
+  background: #eeebe6;
+  padding: 18px 10% 18px 18px;
+}
+@media (max-width: 760px) {
+  .culture-hero .page-hero-grid { grid-template-columns: minmax(0, 1fr); }
+  .culture-hero .culture-art { grid-row: 1; padding: 12px 12px 42px; }
+  .culture-hero-copy { grid-row: 2; margin: -34px 10px 0; }
+}
