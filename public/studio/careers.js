@@ -6,8 +6,13 @@ applicationForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (applicationSubmit.disabled) return;
   const data = new FormData(applicationForm);
-  if (data.get('resume').size > 4_000_000) {
-    applicationStatus.textContent = 'حجم رزومه باید کمتر از ۴ مگابایت باشه.';
+  const resume = data.get('resume');
+  if (!/\.pdf$/i.test(resume.name)) {
+    applicationStatus.textContent = 'رزومه باید فایل PDF باشه.';
+    return;
+  }
+  if (resume.size > 4_000_000) {
+    applicationStatus.textContent = 'حجم رزومه باید حداکثر ۴ مگابایت باشه.';
     return;
   }
   applicationSubmit.disabled = true;

@@ -46,6 +46,7 @@
       <p>برای نقش ادیتور ویدئو</p>
       <form id="career-form" action="/api/career-application" method="post" enctype="multipart/form-data">
         <label>اسم و فامیل<input name="name" autocomplete="name" maxlength="100" required></label>
+        <label>شماره تلفن<input type="tel" name="phone" autocomplete="tel" maxlength="24" required></label>
         <label>رزومه <small>فایل PDF تا ۴ مگابایت</small><input type="file" name="resume" accept=".pdf,application/pdf" required></label>
         <div class="studio-actions"><button class="blue studio-action-primary" type="submit">ارسال رزومه <span aria-hidden="true">↖</span></button></div>
       </form>
@@ -68,4 +69,4 @@
     <button class="blue" type="submit">ثبت درخواست ↖</button>
   </form>
   <p id="contact-status" role="status" aria-live="polite"></p>
-</dialog><script src="/studio/pages.js?v=1"></script><script src="/studio/contact.js?v=1"></script><script src="/studio/careers.js?v=1"></script></body></html>
+</dialog><script src="/studio/pages.js?v=1"></script><script src="/studio/contact.js?v=1"></script><script src="/studio/careers.js?v=2"></script></body></html>
