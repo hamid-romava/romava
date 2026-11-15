@@ -641,3 +641,20 @@ main :is(h1, h2, h3) > .heading-lead {
   .carousel-controls > button:is(:hover, :focus-visible) { transform: translateY(-3px); }
   .carousel-controls > button:active { transform: scale(.95); }
 }
+
+.results-card .result-link {
+  display: inline-flex;
+  grid-column: 1;
+  justify-self: start;
+  align-items: center;
+  gap: 14px;
+  min-height: 44px;
+  padding-inline: 15px;
+  border: 1px solid #fdfcfb70;
+  border-radius: 9px;
+  color: #fdfcfb;
+  text-decoration: none;
+  font-size: 13px;
+}
+.results-card .result-link:is(:hover, :focus-visible) { background: #fdfcfb18; }
+.results-card .result-link:focus-visible { outline-color: #ead5b7; }
