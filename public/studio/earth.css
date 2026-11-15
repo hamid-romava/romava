@@ -429,21 +429,6 @@ main :is(h1, h2, h3) > .heading-lead {
   }
 }
 
-@supports (animation-timeline: view()) {
-  @media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
-    main > :is(.outcomes, .brands, .problem, .startup-details, .plans),
-    main > .adv-scroll .adv-shell {
-      animation: section-arrival linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry min(30svh, 200px);
-    }
-    @keyframes section-arrival {
-      from { opacity: .45; translate: 0 18px; }
-      to { opacity: 1; translate: 0 0; }
-    }
-  }
-}
-
 /* Results: lead with the work, then show the metric and its context. */
 .case-runway .outcome-grid::before,
 .case-runway .outcome-grid::after {
@@ -537,4 +522,75 @@ main :is(h1, h2, h3) > .heading-lead {
 }
 @media (prefers-reduced-motion: reduce) {
   .result-photo { transition: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main {
+    --arrival-distance: 36px;
+    --arrival-range: min(36svh, 280px);
+    --card-travel: 34px;
+  }
+
+  .hero-art { animation: hero-arrival 750ms cubic-bezier(.2,.7,.25,1) both; }
+  .hero-copy { animation: hero-arrival 650ms cubic-bezier(.2,.7,.25,1) 100ms both; }
+  @keyframes hero-arrival {
+    from { opacity: .25; translate: 0 var(--arrival-distance); }
+    to { opacity: 1; translate: 0 0; }
+  }
+
+  .case-runway .case-carousel .results-card.active {
+    animation: result-arrival 540ms cubic-bezier(.18,.75,.28,1) both;
+  }
+  .results-card.active .result-photo img {
+    animation: result-photo-arrival 570ms cubic-bezier(.18,.75,.28,1) 65ms both;
+  }
+  .results-card.active .result-photo:nth-child(2) img { animation-delay: 125ms; }
+  .results-card.active .result-photo:nth-child(3) img { animation-delay: 185ms; }
+  .results-card.active .result-stat { animation: result-copy-arrival 500ms ease-out 155ms both; }
+  .results-card.active .case-pair,
+  .results-card.active > p { animation: result-copy-arrival 500ms ease-out 225ms both; }
+
+  @keyframes result-arrival {
+    from { opacity: .55; translate: calc(var(--case-entry-x, 1) * var(--card-travel)) 14px; scale: .985; }
+    to { opacity: 1; translate: 0 0; scale: 1; }
+  }
+  @keyframes result-photo-arrival {
+    from { opacity: .15; clip-path: inset(16% 0 0 round 9px); }
+    to { opacity: 1; clip-path: inset(0 round 9px); }
+  }
+  @keyframes result-copy-arrival {
+    from { opacity: .15; translate: 0 12px; }
+    to { opacity: 1; translate: 0 0; }
+  }
+
+  @media (max-width: 760px) {
+    main {
+      --arrival-distance: 23px;
+      --arrival-range: min(29svh, 190px);
+      --card-travel: 14px;
+    }
+  }
+
+  @supports (animation-timeline: view()) {
+    main :is(.section-heading, .empathy-intro, .problem-bridge, .startup-heading, .brands, .closing > h2),
+    .adv-shell,
+    .dashboard-faq > h2 {
+      animation: section-arrival linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry var(--arrival-range);
+    }
+    .case-runway .outcome-grid {
+      animation: deck-arrival linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry var(--arrival-range);
+    }
+    @keyframes section-arrival {
+      from { opacity: .55; translate: 0 var(--arrival-distance); }
+      to { opacity: 1; translate: 0 0; }
+    }
+    @keyframes deck-arrival {
+      from { translate: 0 var(--arrival-distance); scale: .97; }
+      to { translate: 0 0; scale: 1; }
+    }
+  }
 }
