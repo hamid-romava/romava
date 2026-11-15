@@ -4,7 +4,7 @@ const scrollAdvantages = matchMedia("(prefers-reduced-motion: no-preference)");
 let advCurrent=-1,advQueued=false;
 function showAdv(index){index=Math.max(0,Math.min(4,index));if(index===advCurrent)return;advCurrent=index;advButtons.forEach((b,i)=>{b.classList.toggle('active',i===index);b.setAttribute('aria-pressed',String(i===index))});advPanels.forEach((p,i)=>{p.classList.toggle('active',i===index);p.setAttribute('aria-hidden',String(i!==index))});document.querySelector('.adv-progress>span').style.width=((index+1)*20)+'%'}
 function updateAdv(){advQueued=false;if(!scrollAdvantages.matches){if(advCurrent<0)showAdv(0);return;}const r=advSection.getBoundingClientRect(),travel=advSection.offsetHeight-innerHeight;showAdv(Math.floor(Math.max(0,Math.min(.9999,-r.top/Math.max(1,travel)))*5))}
-addEventListener('scroll',()=>{if(!advQueued){advQueued=true;requestAnimationFrame(updateAdv)}},{passive:true});addEventListener('resize',updateAdv);advButtons.forEach((b,i)=>b.addEventListener('click',()=>{const start=scrollY+advSection.getBoundingClientRect().top,travel=advSection.offsetHeight-innerHeight;if(!scrollAdvantages.matches){showAdv(i);return;}window.scrollTo({top:start+(i+.5)*travel/5,behavior:'smooth'})}));updateAdv();
+addEventListener('scroll',()=>{if(!advQueued){advQueued=true;requestAnimationFrame(updateAdv)}},{passive:true});addEventListener('resize',updateAdv);advButtons.forEach((b,i)=>b.addEventListener('click',()=>{const start=scrollY+advSection.getBoundingClientRect().top,travel=advSection.offsetHeight-innerHeight;if(!scrollAdvantages.matches){showAdv(i);return;}window.scrollTo({top:start+(i+.35)*travel/5,behavior:'instant'});showAdv(i)}));updateAdv();
 const caseRunway = document.querySelector('.case-runway');
 const caseTrack = caseRunway.querySelector('.outcome-grid');
 const caseCards = [...caseTrack.querySelectorAll('.outcome-card')];
@@ -102,3 +102,19 @@ renderCases(0);
 caseTrack.classList.add('case-motion-ready');
 syncCaseMode();
 document.querySelectorAll('[data-open-lean]').forEach(a=>a.addEventListener('click',()=>{document.querySelector('#lean-cycle').open=true}));function openHashDisclosure(){if(location.hash==='#results')document.querySelector('#results').open=true}addEventListener('hashchange',openHashDisclosure);openHashDisclosure();
+
+// Keep the bottom of taller sections visible before the next section covers them.
+if (CSS.supports('timeline-scope: --chapter-cover')) {
+  const chapters = [...document.querySelectorAll('.chapter-under')];
+  function sizeChapter(chapter) {
+    chapter.style.setProperty('--chapter-top', `${Math.min(0, innerHeight - chapter.offsetHeight)}px`);
+  }
+  const chapterObserver = new ResizeObserver(entries => {
+    entries.forEach(({ target }) => sizeChapter(target));
+  });
+  chapters.forEach(chapter => {
+    sizeChapter(chapter);
+    chapterObserver.observe(chapter);
+  });
+  addEventListener('resize', () => chapters.forEach(sizeChapter));
+}

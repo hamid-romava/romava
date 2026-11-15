@@ -597,107 +597,49 @@ main :is(h1, h2, h3) > .heading-lead {
   }
 }
 
-/* The homepage alternates editorial introductions and full-width sections. */
-.home-v2 main .hero {
-  display: block;
-  max-width: none;
-  padding: clamp(34px, 5.5vw, 90px) 0 0;
-}
-.home-v2 .hero .hero-copy {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
-  align-items: end;
-  column-gap: clamp(28px, 7vw, 110px);
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 clamp(20px, 6vw, 88px) clamp(28px, 5vw, 68px);
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-.home-v2 .hero .eyebrow { grid-column: 1 / -1; margin-bottom: clamp(13px, 2vw, 26px); }
-.home-v2 .hero h1 { margin: 0; font-size: clamp(60px, 8.2vw, 130px); line-height: 1.13; }
-.home-v2 .hero-intro > p { margin: 0 0 20px; color: var(--muted); line-height: 2; }
-.home-v2 .hero .hero-art {
-  aspect-ratio: auto;
-  height: clamp(295px, 68svh, 760px);
-  border-radius: 0;
-}
-.home-v2 .hero .hero-art img { object-position: center 54%; }
-.home-v2 .hero .hero-art::after {
-  display: block;
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(0deg, #14171450, transparent 48%);
-}
-.home-v2 #problem { margin-top: 0; }
-.home-v2 .problem-bridge { padding-block: clamp(46px, 9vw, 146px); }
-.home-v2 .results-chapter {
-  background: #262c24;
-  color: #fff;
-  padding-inline: clamp(0px, 3vw, 32px);
-}
-.home-v2 #outcomes .section-kicker,
-.home-v2 #outcomes .section-heading :is(p, span),
-.home-v2 .results-chapter .brands,
-.home-v2 .results-chapter .brands b,
-.home-v2 .results-chapter :is(.carousel-controls button, #case-position) { color: #e9e3d8; }
-.home-v2 #outcomes .section-kicker { border-color: #ffffff2e; }
-.home-v2 #outcomes .section-kicker::before { background: #262c24; }
-.home-v2 #outcomes .section-heading { color: #fff; }
-.home-v2 #outcomes .section-heading h2 { font-size: clamp(34px, 6vw, 88px); }
-.home-v2 .results-chapter .brands img { filter: grayscale(1) brightness(0) invert(1); opacity: .72; }
-.home-v2 .results-chapter .case-dots button.active { background: #dfb782; }
-.home-v2 #plans .section-heading h2 { font-size: clamp(34px, 5vw, 75px); }
-.home-v2 .closing {
-  max-width: none;
-  margin-inline: 0;
-  padding-block: clamp(70px, 12vw, 170px);
-  background: #eeeae1;
-}
-.home-versions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 12px;
-}
+.home-versions { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; }
 .home-versions [aria-current] { font-weight: 700; color: var(--forest); }
 
 @media (max-width: 760px) {
-  .home-v2 .hero .hero-copy { grid-template-columns: minmax(0, 1fr); row-gap: 15px; }
-  .home-v2 .hero .eyebrow { margin: 0; }
-  .home-v2 .hero h1 { font-size: clamp(48px, 12vw, 74px); }
-  .home-v2 .hero .hero-art { height: clamp(270px, 51svh, 440px); }
-  .home-v2 .hero-intro > p { font-size: 14px; }
-  .home-v2 #outcomes .section-heading { margin-bottom: 34px; }
+  .chapter-cover > .startup-details,
+  .chapter-under > :is(.problem, .plans) {
+    padding-block: clamp(36px, 7svh, 56px);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .home-v2 .hero-art,
-  .home-v2 .hero-copy { animation-timing-function: cubic-bezier(.2,.6,.32,1); }
-  .home-v2 .adv-panel {
-    transition: opacity .5s ease, transform .5s cubic-bezier(.2,.6,.32,1), visibility .5s;
+  @supports (timeline-scope: --chapter-cover) {
+    .chapter-overlap {
+      position: relative;
+      isolation: isolate;
+      timeline-scope: --chapter-cover;
+    }
+    .chapter-under {
+      position: sticky;
+      top: var(--chapter-top, 0px);
+      animation: chapter-recede linear both;
+      animation-timeline: --chapter-cover;
+      animation-range: entry 0% entry 72svh;
+    }
+    .chapter-cover {
+      position: relative;
+      z-index: 1;
+      display: flow-root;
+      background: var(--paper);
+      view-timeline-name: --chapter-cover;
+    }
+    .chapter-cover:has(> #approach) { background: var(--forest); }
+    @keyframes chapter-recede {
+      0% { opacity: 1; scale: 1; }
+      35% { opacity: .90; scale: .99; }
+      100% { opacity: 0; scale: .96; }
+    }
   }
-  @supports (animation-timeline: view()) {
-    .home-v2 .hero-art img {
-      animation: home-image-travel linear both;
-      animation-timeline: view();
-      animation-range: cover;
-    }
-    .home-v2 .plans-grid > article,
-    .home-v2 .dashboard-faq > div,
-    .home-v2 .startup-details > details {
-      animation: section-arrival cubic-bezier(.25,.55,.4,1) both;
-      animation-timeline: view();
-      animation-range: entry 0% entry var(--arrival-range);
-    }
-    @keyframes home-image-travel {
-      from { transform: scale(1.12) translateY(-3%); }
-      to { transform: scale(1.12) translateY(3%); }
-    }
+  .hero-actions :is(a, button) > span,
+  .carousel-controls > button {
+    transition: transform 260ms cubic-bezier(.22,.65,.3,1), background-color 260ms ease;
   }
+  .hero-actions :is(a, button):is(:hover, :focus-visible) > span { transform: translate(-4px, 2px); }
+  .carousel-controls > button:is(:hover, :focus-visible) { transform: translateY(-3px); }
+  .carousel-controls > button:active { transform: scale(.95); }
 }
