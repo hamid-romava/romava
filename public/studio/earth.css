@@ -528,7 +528,6 @@ main :is(h1, h2, h3) > .heading-lead {
   main {
     --arrival-distance: 36px;
     --arrival-range: min(36svh, 280px);
-    --card-travel: 34px;
   }
 
   .hero-art { animation: hero-arrival 750ms cubic-bezier(.2,.7,.25,1) both; }
@@ -538,36 +537,10 @@ main :is(h1, h2, h3) > .heading-lead {
     to { opacity: 1; translate: 0 0; }
   }
 
-  .case-runway .case-carousel .results-card.active {
-    animation: result-arrival 540ms cubic-bezier(.18,.75,.28,1) both;
-  }
-  .results-card.active .result-photo img {
-    animation: result-photo-arrival 570ms cubic-bezier(.18,.75,.28,1) 65ms both;
-  }
-  .results-card.active .result-photo:nth-child(2) img { animation-delay: 125ms; }
-  .results-card.active .result-photo:nth-child(3) img { animation-delay: 185ms; }
-  .results-card.active .result-stat { animation: result-copy-arrival 500ms ease-out 155ms both; }
-  .results-card.active .case-pair,
-  .results-card.active > p { animation: result-copy-arrival 500ms ease-out 225ms both; }
-
-  @keyframes result-arrival {
-    from { opacity: .55; translate: calc(var(--case-entry-x, 1) * var(--card-travel)) 14px; scale: .985; }
-    to { opacity: 1; translate: 0 0; scale: 1; }
-  }
-  @keyframes result-photo-arrival {
-    from { opacity: .15; clip-path: inset(16% 0 0 round 9px); }
-    to { opacity: 1; clip-path: inset(0 round 9px); }
-  }
-  @keyframes result-copy-arrival {
-    from { opacity: .15; translate: 0 12px; }
-    to { opacity: 1; translate: 0 0; }
-  }
-
   @media (max-width: 760px) {
     main {
       --arrival-distance: 23px;
       --arrival-range: min(29svh, 190px);
-      --card-travel: 14px;
     }
   }
 
@@ -575,12 +548,12 @@ main :is(h1, h2, h3) > .heading-lead {
     main :is(.section-heading, .empathy-intro, .problem-bridge, .startup-heading, .brands, .closing > h2),
     .adv-shell,
     .dashboard-faq > h2 {
-      animation: section-arrival linear both;
+      animation: section-arrival cubic-bezier(.25,.55,.4,1) both;
       animation-timeline: view();
       animation-range: entry 0% entry var(--arrival-range);
     }
     .case-runway .outcome-grid {
-      animation: deck-arrival linear both;
+      animation: deck-arrival cubic-bezier(.25,.55,.4,1) both;
       animation-timeline: view();
       animation-range: entry 0% entry var(--arrival-range);
     }
@@ -592,5 +565,34 @@ main :is(h1, h2, h3) > .heading-lead {
       from { translate: 0 var(--arrival-distance); scale: .97; }
       to { translate: 0 0; scale: 1; }
     }
+  }
+}
+
+/* Keep outgoing and incoming results in the same track so they overlap in motion. */
+.case-runway .case-carousel .case-motion-ready { display: grid; }
+.case-runway .case-carousel .case-motion-ready .results-card {
+  display: grid;
+  grid-area: 1 / 1;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: clamp(12px, 2vw, 20px);
+  padding: clamp(17px, 3vw, 34px);
+  visibility: visible;
+  opacity: var(--case-opacity, 0);
+  pointer-events: none;
+  animation: none;
+}
+.case-runway .case-carousel .case-motion-ready .results-card.active { pointer-events: auto; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .case-motion-ready .results-card {
+    transform: translateX(calc(var(--case-offset, 0) * -14px));
+    transition: opacity 480ms cubic-bezier(.22,.65,.3,1),
+                transform 480ms cubic-bezier(.22,.65,.3,1);
+  }
+  .case-scroll-motion .results-card {
+    transform: translateY(calc(var(--case-offset, 0) * 38px))
+               scale(calc(1 - (1 - var(--case-opacity, 0)) * .025));
+    transition: none;
   }
 }
