@@ -481,19 +481,19 @@ main :is(h1, h2, h3) > .heading-lead {
 .result-photo {
   position: relative;
   display: block;
-  height: clamp(105px, 25svh, 232px);
+  width: clamp(68px, 16svh, 149px);
   max-width: 32%;
+  min-width: 0;
   transition: transform .2s ease;
 }
-.result-gallery:has(> :nth-child(3)) > :not(:nth-child(2)) { height: clamp(88px, 21svh, 196px); }
+.result-gallery:has(> :nth-child(3)) > :not(:nth-child(2)) { width: clamp(57px, 13.5svh, 126px); }
+.result-proof { width: clamp(47px, 11.25svh, 104px); }
 .result-photo:hover { transform: translateY(-3px); }
 .result-photo:focus-visible { outline: 2px solid var(--honey); outline-offset: 4px; }
 .result-photo img {
   display: block;
-  width: auto;
-  max-width: 100%;
-  height: 100%;
-  object-fit: contain;
+  width: 100%;
+  height: auto;
   border-radius: 9px;
   box-shadow: 0 10px 22px #0b100d66;
 }
@@ -531,8 +531,9 @@ main :is(h1, h2, h3) > .heading-lead {
 @media (max-width: 760px) {
   .case-runway .outcome-grid::before { left: -5px; }
   .case-runway .outcome-grid::after { left: -10px; }
-  .result-photo { height: clamp(105px, 23svh, 180px); }
-  .result-gallery:has(> :nth-child(3)) > :not(:nth-child(2)) { height: clamp(88px, 19svh, 152px); }
+  .result-photo { width: clamp(68px, 14.75svh, 116px); }
+  .result-gallery:has(> :nth-child(3)) > :not(:nth-child(2)) { width: clamp(57px, 12.25svh, 98px); }
+  .result-proof { width: clamp(47px, 10.35svh, 81px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .result-photo { transition: none; }
