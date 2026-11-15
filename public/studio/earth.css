@@ -386,12 +386,14 @@ main :is(h1, h2, h3) > .heading-lead {
   line-height: 1.45;
   margin-block-end: .22em;
 }
-.case-runway .case-carousel .outcome-card > p {
+.case-runway .case-carousel .outcome-card > p,
+.case-runway .case-carousel .result-detail > p {
   color: #cbd0c4;
   font-size: clamp(12px, 1.1vw, 14px);
   line-height: 1.85;
 }
-.case-runway .outcome-card > p b { font-weight: 400; }
+.case-runway .outcome-card > p b,
+.case-runway .result-detail > p b { font-weight: 400; }
 
 .brands > .brands-window {
   display: block;
@@ -642,10 +644,16 @@ main :is(h1, h2, h3) > .heading-lead {
   .carousel-controls > button:active { transform: scale(.95); }
 }
 
+.result-detail {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(8px, 3vw, 30px);
+}
 .results-card .result-link {
   display: inline-flex;
-  grid-column: 1;
-  justify-self: start;
+  flex: none;
   align-items: center;
   gap: 14px;
   min-height: 44px;
@@ -654,6 +662,7 @@ main :is(h1, h2, h3) > .heading-lead {
   border-radius: 9px;
   color: #fdfcfb;
   text-decoration: none;
+  white-space: nowrap;
   font-size: 13px;
 }
 .results-card .result-link:is(:hover, :focus-visible) { background: #fdfcfb18; }
