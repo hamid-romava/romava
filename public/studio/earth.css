@@ -393,35 +393,6 @@ main :is(h1, h2, h3) > .heading-lead {
 }
 .case-runway .outcome-card > p b { font-weight: 400; }
 
-/* Show the highlighted metric up close while linking to the original image. */
-.case-runway .case-carousel .abdi .case-proof a {
-  overflow: hidden;
-  background: #fff;
-  cursor: zoom-in;
-}
-.case-runway .case-carousel .abdi .case-proof .proof-crop {
-  position: relative;
-  display: block;
-  aspect-ratio: 1.56;
-  overflow: hidden;
-}
-.case-runway .case-carousel .abdi .case-proof img {
-  position: absolute;
-  top: -420%;
-  left: -88.46%;
-  width: 192.31%;
-  max-width: none;
-  height: auto;
-  border-radius: 0;
-}
-.case-runway .proof-crop .proof-focus {
-  left: 5.77%;
-  top: 25.33%;
-  width: 88.46%;
-  height: 60%;
-  border-radius: 6px;
-}
-
 .brands > .brands-window {
   display: block;
   min-width: 0;
@@ -471,4 +442,98 @@ main :is(h1, h2, h3) > .heading-lead {
       to { opacity: 1; translate: 0 0; }
     }
   }
+}
+
+/* Results: lead with the work, then show the metric and its context. */
+.case-runway .outcome-grid::before,
+.case-runway .outcome-grid::after {
+  content: "";
+  position: absolute;
+  inset: 5px 8px 5px -8px;
+  border: 1px solid #73745a65;
+  border-radius: 22px;
+  pointer-events: none;
+}
+.case-runway .outcome-grid::after { inset: 10px 16px 10px -16px; }
+.case-runway .case-carousel .results-card {
+  position: relative;
+  z-index: 1;
+  border-radius: 18px 42px 18px 18px;
+  background: radial-gradient(ellipse at 15% 8%, #545642, transparent 62%), var(--forest);
+}
+.case-runway .case-carousel .results-card.active {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: clamp(12px, 2vw, 20px);
+  min-height: 0;
+  padding: clamp(17px, 3vw, 34px);
+}
+.case-runway .results-card .case-person { margin: 0; }
+.result-gallery {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(8px, 2vw, 22px);
+  padding-block: 2px;
+  direction: ltr;
+}
+.result-photo {
+  position: relative;
+  display: block;
+  height: clamp(105px, 25svh, 232px);
+  max-width: 32%;
+  transition: transform .2s ease;
+}
+.result-gallery:has(> :nth-child(3)) > :not(:nth-child(2)) { height: clamp(88px, 21svh, 196px); }
+.result-photo:hover { transform: translateY(-3px); }
+.result-photo:focus-visible { outline: 2px solid var(--honey); outline-offset: 4px; }
+.result-photo img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 9px;
+  box-shadow: 0 10px 22px #0b100d66;
+}
+.result-proof-focus {
+  position: absolute;
+  left: 49%;
+  top: 66.8%;
+  width: 46%;
+  height: 9%;
+  border: 1px solid #f45c59;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.result-stat {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+.result-stat strong {
+  color: #dfb782;
+  font-size: clamp(55px, 9vw, 98px);
+  line-height: 1;
+  letter-spacing: -.035em;
+}
+.result-stat strong span { font-size: .44em; }
+.result-stat > span { font-size: clamp(14px, 2.1vw, 22px); }
+.case-runway .case-carousel .results-card :is(.case-pair, p) {
+  grid-column: 1;
+  margin: 0;
+}
+.case-runway .results-card .case-pair { padding-block: 10px; }
+@media (min-width: 761px) {
+  .case-runway .case-carousel .results-card.active { min-height: 510px; }
+}
+@media (max-width: 760px) {
+  .case-runway .outcome-grid::before { left: -5px; }
+  .case-runway .outcome-grid::after { left: -10px; }
+  .result-photo { height: clamp(105px, 23svh, 180px); }
+  .result-gallery:has(> :nth-child(3)) > :not(:nth-child(2)) { height: clamp(88px, 19svh, 152px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-photo { transition: none; }
 }
