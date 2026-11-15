@@ -597,8 +597,6 @@ main :is(h1, h2, h3) > .heading-lead {
   }
 }
 
-.home-versions { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; }
-.home-versions [aria-current] { font-weight: 700; color: var(--forest); }
 
 @media (max-width: 760px) {
   .chapter-cover > .startup-details,
