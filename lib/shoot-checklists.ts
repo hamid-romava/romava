@@ -4,19 +4,22 @@ const clients = { abdi: "عبدی", reza: "رضا خوانی" } as const;
 const clientPrefixes = { abdi: "drAbdi", reza: "drRezaKhani" } as const;
 const arrivalItems = [
   ["lighting", "شات پلن"],
-  ["script", "چک کردن سناریو با سوژه"],
+  ["script", "چک کردن سناریو با مجری"],
   ["noise", "بررسی صداهای مزاحم"],
   ["background", "بررسی پس‌زمینه و حذف عناصر مزاحم از کادر"],
   ["presenter-appearance", "گریم و لباس مجری"],
   ["phones", "تحویل گرفتن گوشی‌ها و درخواست برای سایلنت کردن گوشی‌ها"],
   ["water", "قرار دادن آب ولرم کنار مجری"],
   ["clickup", "چک کردن کلیک‌اپ"],
+  ["no-hard-feelings", "توضیح عدم دلخوری"],
+  ["doctor-honesty-letter", "گرفتن صداقت‌نامه از دکتر"],
 ] as const;
 const departureItems = [["packing", "چک کردن چک‌لیست وسایل"]] as const;
 const recordingItems = [
   ["framing", "کادربندی · تنفس یک‌پنجم بالایی"],
   ["safe-area", "کادربندی · رعایت Safe Zone اینستاگرام"],
   ["script-framing", "کادربندی بر اساس فرم اسکریپت"],
+  ["osta-level", "اوستا تراز"],
   ["presenter-lighting", "نورپردازی بر اساس مجری"],
   ["camera", "تنظیمات دوربین (رزولوشن و فوکوس)"],
   ["microphone", "تست میکروفون"],
@@ -35,8 +38,14 @@ type Shoot = {
 
 const allChecked = (items: ReadonlyArray<readonly [string, string]>, checked: readonly string[]) =>
   items.every(([id]) => checked.includes(id));
-const arrivalComplete = (shoot: Shoot) => Boolean(shoot.general.arrivalTime) && allChecked(arrivalItems, shoot.general.checked);
-const firstIncompleteRecording = (shoot: Shoot) => shoot.recordings.find(row => !allChecked(recordingItems, row.checked));
+const applicableArrivalItems = (shoot: Shoot) => arrivalItems.filter(([id]) =>
+  (id !== "no-hard-feelings" && id !== "doctor-honesty-letter") || !shoot.closedAt || shoot.general.checked.includes(id),
+);
+const arrivalComplete = (shoot: Shoot) => Boolean(shoot.general.arrivalTime) && allChecked(applicableArrivalItems(shoot), shoot.general.checked);
+const applicableRecordingItems = (shoot: Shoot, row: Recording) => recordingItems.filter(([id]) =>
+  id !== "osta-level" || !shoot.closedAt || row.checked.includes(id),
+);
+const firstIncompleteRecording = (shoot: Shoot) => shoot.recordings.find(row => !allChecked(applicableRecordingItems(shoot, row), row.checked));
 const canLeave = (shoot: Shoot) => arrivalComplete(shoot) && shoot.recordings.length > 0 && !firstIncompleteRecording(shoot);
 
 const path = "/team/meetings?view=shoots";
@@ -98,7 +107,7 @@ export async function renderShootChecklists(url: URL, { escape, csrf, newId }: R
     const newRecording = !locked && wantsNew;
     const departure = !locked && !selected && wantsDeparture;
     const section = departure ? "departure" : "arrival";
-    const items = selected ? recordingItems : departure ? departureItems : arrivalItems;
+    const items = selected ? applicableRecordingItems(shoot, selected) : departure ? departureItems : applicableArrivalItems(shoot);
     const title = departure ? "چک‌لیست خروج" : "چک‌لیست ورود";
     const checked = new Set(checklist.checked);
     const status = url.searchParams.get("status");
@@ -134,7 +143,7 @@ export async function renderShootChecklists(url: URL, { escape, csrf, newId }: R
       url: link(shoot._id, row.id),
       label: row.name || `ضبط ${format.format(index + 1)}`,
       active: selected?.id === row.id,
-      done: allChecked(recordingItems, row.checked),
+      done: allChecked(applicableRecordingItems(shoot, row), row.checked),
       locked: !arrivalDone || index > pendingIndex,
     }));
     const arrival = { url: link(shoot._id), label: "چک‌لیست ورود", active: !selected && !departure && !newRecording, done: arrivalDone, locked: false };
