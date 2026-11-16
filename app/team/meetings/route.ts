@@ -13,13 +13,13 @@ function page(body: string) { return `<!doctype html><html lang="fa" dir="rtl"><
 .team-menu-toggle,.team-menu-heading button{display:grid;place-content:center;width:44px;height:44px;padding:0;background:#fff;color:#26324a;border:1px solid #dce2ef;border-radius:10px}
 .team-menu-toggle{gap:4px}
 .team-menu-toggle span{width:18px;height:2px;border-radius:2px;background:currentColor}
-.team-menu{position:fixed;inset:0 0 0 auto;width:min(300px,85vw);max-width:none;max-height:none;margin:0;padding:20px;padding-right:max(20px,env(safe-area-inset-right));overflow-y:auto;border:0;border-left:1px solid #e1e6ef;background:#fff;color:#26324a;box-shadow:-14px 0 40px #1e315533}
-.team-menu::backdrop{background:#15243c66}
+.team-menu{position:fixed;top:0;right:0;bottom:auto;left:auto;width:min(360px,88vw);height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) 20px;overflow-y:auto;overscroll-behavior:contain;border:0;background:#fff;color:#26324a;box-shadow:-12px 0 44px #14254433}
+.team-menu::backdrop{background:#101b32a0}
 .team-menu-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6ef;padding-bottom:16px;font-size:18px}
 .team-menu-heading button{font-size:24px}
 .team-nav.team-menu-links{flex-direction:column}
 .team-menu-links a{padding:10px 14px}
-@media(prefers-reduced-motion:no-preference){.team-menu:popover-open{animation:team-menu-in .2s ease-out}@keyframes team-menu-in{from{transform:translateX(100%)}to{transform:translateX(0)}}}
+@media(prefers-reduced-motion:no-preference){.team-menu:popover-open{animation:team-menu-in .26s cubic-bezier(.2,.75,.25,1)}@keyframes team-menu-in{from{transform:translateX(100%)}to{transform:translateX(0)}}}
 
 .shoot-progress{margin:20px 0}.shoot-progress-label{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.shoot-progress-label span{color:#58677e}
 .shoot-progress progress{display:block;width:100%;height:8px;margin-top:8px;accent-color:#2855f5}
