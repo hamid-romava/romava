@@ -3,6 +3,11 @@
   const allowedHosts = ['www.romavastudio.ir', 'romavastudio.ir'];
   if (!allowedHosts.includes(location.hostname)) return;
 
+  function testModeEnabled() {
+    return document.cookie.split(';').some(cookie => cookie.trim() === 'romava_ga_test=1');
+  }
+  if (testModeEnabled()) return;
+
   window.dataLayer = window.dataLayer || [];
   function gtag() { window.dataLayer.push(arguments); }
   gtag('js', new Date());
@@ -13,7 +18,9 @@
   document.head.append(tag);
 
   // Keep query strings and form fields out of the custom events.
-  const send = (event) => gtag('event', event, { page_location: location.origin + location.pathname });
+  const send = (event) => {
+    if (!testModeEnabled()) gtag('event', event, { page_location: location.origin + location.pathname });
+  };
   window.romavaAnalyticsEvent = send;
   send('romava_home_view');
 

@@ -13,12 +13,24 @@ function login(request: Request, error = "") {
   const nonce = loginNonce();
   return new Response(page(`<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
 }
+const analyticsTestCookie = "romava_ga_test";
+
 function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics") {
+  const testMode = readCookie(request, analyticsTestCookie) === "1";
+  const testModeCsrf = hash(readCookie(request, "romava_team_session") + ":analytics-test");
   return `<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><form method="post" action="/team/meetings"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="${hash(readCookie(request, "romava_team_session") + ":logout")}"><button class="logout">خروج</button></form></header><nav class="team-nav" aria-label="بخش‌های پنل تیم">
     <a href="/team/meetings"${active === "meetings" ? ' aria-current="page"' : ""}>پاسخ جلسات</a>
     <a href="/team/meetings?view=requests"${active === "requests" ? ' aria-current="page"' : ""}>درخواست‌های سایت</a>
     <a href="/team/meetings?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
-  </nav>`;
+  </nav>
+  <form class="team-nav" method="post" action="/team/meetings">
+    <input type="hidden" name="action" value="analytics-test">
+    <input type="hidden" name="csrf" value="${testModeCsrf}">
+    <input type="hidden" name="enabled" value="${testMode ? "0" : "1"}">
+    <button class="logout">${testMode ? "خاموش کردن حالت تست گوگل" : "روشن کردن حالت تست گوگل"}</button>
+    ${testMode ? '<a href="/">باز کردن سایت برای تست ↗</a>' : ""}
+  </form>
+  ${testMode ? '<p role="status">حالت تست گوگل روی همین مرورگر فعاله.</p>' : ""}`;
 }
 
 function contactDate(value: unknown) {
@@ -109,6 +121,16 @@ export async function POST(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Unsupported form", { status: 415, headers });
   const form = await request.formData();
+  if (form.get("action") === "analytics-test") {
+    const csrf = hash(readCookie(request, "romava_team_session") + ":analytics-test");
+    const enabled = form.get("enabled");
+    if (!teamAuthenticated(request) || form.get("csrf") !== csrf || (enabled !== "0" && enabled !== "1")) {
+      return new Response("Forbidden", { status: 403, headers });
+    }
+    const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
+    const cookie = `${analyticsTestCookie}=${enabled}; Path=/; Max-Age=${enabled === "1" ? 31536000 : 0}; SameSite=Lax${secure}`;
+    return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings", "Set-Cookie": cookie } });
+  }
   if (form.get("action") === "logout" && teamAuthenticated(request) && form.get("csrf") === hash(readCookie(request, "romava_team_session") + ":logout")) return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings", "Set-Cookie": teamCookie(request, true) } });
   const csrf = readCookie(request, "romava_team_csrf");
   if (!/^[a-f0-9]{48}$/.test(csrf) || form.get("csrf") !== csrf) return login(request, "فرم ورود منقضی شده. دوباره وارد شو.");

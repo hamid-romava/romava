@@ -106,17 +106,18 @@ const handleSubmit = useCallback(
 
         
 
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-0J0PJQKYNZ"
-          strategy="afterInteractive"
-        />
-
         <Script id="google-analytics" strategy="afterInteractive">
           {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-0J0PJQKYNZ');
+            if (!document.cookie.split(';').some(cookie => cookie.trim() === 'romava_ga_test=1')) {
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-0J0PJQKYNZ');
+              const tag = document.createElement('script');
+              tag.async = true;
+              tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-0J0PJQKYNZ';
+              document.head.append(tag);
+            }
           `}
         </Script>
 
