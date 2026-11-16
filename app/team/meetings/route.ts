@@ -8,20 +8,58 @@ export const dynamic = "force-dynamic";
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
 const headers = { ...htmlHeaders, "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" };
 const labels: Record<string, string> = { liked: "چی به دلش نشست؟", improve: "کجا جای بهترشدن داره؟", results: "خبرهای پشت پیج", "next-month": "رویدادها و اتفاق‌های پیش رو", ideas: "ایده‌های پیشنهادی" };
-function page(body: string) { return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پنل تیم روماوا</title><style>@font-face{font-family:Yekan;src:url('/fonts/YekanBakh-Regular.ttf')}*{box-sizing:border-box}body{font:14px/2 Yekan,sans-serif;background:#f7f8fa;color:#26324a;margin:0}.page{max-width:900px;margin:auto;padding:28px 20px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6f0;padding-bottom:20px}header img{width:100px}h1{font-size:26px;margin:30px 0 8px}p{color:#788397}button,input{font:inherit}button{cursor:pointer;background:#2855f5;color:white;border:0;border-radius:10px;padding:10px 20px}input{display:block;width:100%;border:1px solid #dce2ef;padding:12px;border-radius:10px;margin:8px 0 18px}.login{max-width:390px;margin:60px auto}.card{background:white;border:1px solid #e1e6ef;border-radius:16px;margin:16px 0;padding:20px}summary{cursor:pointer;font-weight:bold}small{color:#8792a5}.answer{padding:15px 0;border-bottom:1px solid #edf0f6}.answer:last-child{border:0}.answer h3{font-size:13px;margin:0}.answer p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;color:#58677e}.notice{background:#fff3d6;border-radius:12px;padding:15px}.logout{background:white;color:#68738c;border:1px solid #dce2ef}label{display:block}.team-nav,.paging{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.team-nav a,.paging a{padding:6px 14px;border:1px solid #dce2ef;border-radius:10px;color:#26324a;text-decoration:none;background:white}.team-nav a[aria-current]{background:#2855f5;color:white;border-color:#2855f5}.contact-meta{margin:10px 0 0}.contact-meta div{display:flex;gap:10px;flex-wrap:wrap}.contact-meta dt{color:#58677e}.contact-meta dd{margin:0;overflow-wrap:anywhere}.analytics-list{list-style:none;padding:0;margin:0}.analytics-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0}.analytics-list li+li{border-top:1px solid #e5e8f0}</style></head><body><div class="page">${body}</div></body></html>`; }
+function page(body: string) { return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پنل تیم روماوا</title><style>@font-face{font-family:Yekan;src:url('/fonts/YekanBakh-Regular.ttf')}*{box-sizing:border-box}body{font:14px/2 Yekan,sans-serif;background:#f7f8fa;color:#26324a;margin:0}.page{max-width:900px;margin:auto;padding:28px 20px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6f0;padding-bottom:20px}header img{width:100px}h1{font-size:26px;margin:30px 0 8px}p{color:#788397}button,input{font:inherit}button{cursor:pointer;background:#2855f5;color:white;border:0;border-radius:10px;padding:10px 20px}input{display:block;width:100%;border:1px solid #dce2ef;padding:12px;border-radius:10px;margin:8px 0 18px}.login{max-width:390px;margin:60px auto}.card{background:white;border:1px solid #e1e6ef;border-radius:16px;margin:16px 0;padding:20px}summary{cursor:pointer;font-weight:bold}small{color:#8792a5}.answer{padding:15px 0;border-bottom:1px solid #edf0f6}.answer:last-child{border:0}.answer h3{font-size:13px;margin:0}.answer p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;color:#58677e}.notice{background:#fff3d6;border-radius:12px;padding:15px}.logout{background:white;color:#68738c;border:1px solid #dce2ef}label{display:block}.team-nav,.paging{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.team-nav a,.paging a{padding:6px 14px;border:1px solid #dce2ef;border-radius:10px;color:#26324a;text-decoration:none;background:white}.team-nav a[aria-current]{background:#2855f5;color:white;border-color:#2855f5}.contact-meta{margin:10px 0 0}.contact-meta div{display:flex;gap:10px;flex-wrap:wrap}.contact-meta dt{color:#58677e}.contact-meta dd{margin:0;overflow-wrap:anywhere}.analytics-list{list-style:none;padding:0;margin:0}.analytics-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0}.analytics-list li+li{border-top:1px solid #e5e8f0}select{font:inherit;display:block;width:100%;background:white;color:inherit;border:1px solid #dce2ef;border-radius:10px;padding:12px;margin:8px 0 18px}.shoot-items{margin:12px 0 18px}.shoot-items label{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf0f6;cursor:pointer}.shoot-items input{width:20px;height:20px;flex:none;margin:0;accent-color:#2855f5}
+.team-brand{display:flex;align-items:center;gap:14px}
+.team-menu-toggle,.team-menu-heading button{display:grid;place-content:center;width:44px;height:44px;padding:0;background:#fff;color:#26324a;border:1px solid #dce2ef;border-radius:10px}
+.team-menu-toggle{gap:4px}
+.team-menu-toggle span{width:18px;height:2px;border-radius:2px;background:currentColor}
+.team-menu{position:fixed;inset:0 0 0 auto;width:min(300px,85vw);max-width:none;max-height:none;margin:0;padding:20px;padding-right:max(20px,env(safe-area-inset-right));overflow-y:auto;border:0;border-left:1px solid #e1e6ef;background:#fff;color:#26324a;box-shadow:-14px 0 40px #1e315533}
+.team-menu::backdrop{background:#15243c66}
+.team-menu-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6ef;padding-bottom:16px;font-size:18px}
+.team-menu-heading button{font-size:24px}
+.team-nav.team-menu-links{flex-direction:column}
+.team-menu-links a{padding:10px 14px}
+@media(prefers-reduced-motion:no-preference){.team-menu:popover-open{animation:team-menu-in .2s ease-out}@keyframes team-menu-in{from{transform:translateX(100%)}to{transform:translateX(0)}}}
+
+.shoot-progress{margin:20px 0}.shoot-progress-label{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.shoot-progress-label span{color:#58677e}
+.shoot-progress progress{display:block;width:100%;height:8px;margin-top:8px;accent-color:#2855f5}
+.shoot-stages{margin:12px 0}.shoot-stages a{display:inline-flex;gap:6px;align-items:center}.stage-locked{display:inline-flex;align-items:center;padding:10px 14px;border:1px solid #e1e6ef;border-radius:10px;background:#f1f3f7;color:#68738c}.shoot-stages .stage-add{border-style:dashed}
+.shoot-stages .stage-complete:not([aria-current]){color:#176344;border-color:#a8d9c6;background:#edf9f3}.stage-mark{font-weight:bold}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.card textarea{display:block;width:100%;font:inherit;color:inherit;border:1px solid #dce2ef;border-radius:10px;padding:12px;margin:8px 0 18px;resize:vertical}</style></head><body><div class="page">${body}</div></body></html>`; }
 function login(request: Request, error = "") {
   const nonce = loginNonce();
   return new Response(page(`<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
 }
 const analyticsTestCookie = "romava_ga_test";
 
-function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc") {
-  return `<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><form method="post" action="/team/meetings"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="${hash(readCookie(request, "romava_team_session") + ":logout")}"><button class="logout">خروج</button></form></header><nav class="team-nav" aria-label="بخش‌های پنل تیم">
+function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots") {
+  return `<header>
+    <div class="team-brand">
+      <button type="button" class="team-menu-toggle" popovertarget="team-menu" aria-label="منوی پنل تیم">
+        <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+      </button>
+      <img src="/brand/romava-logo-focus.svg" alt="روماوا">
+    </div>
+    <form method="post" action="/team/meetings">
+      <input type="hidden" name="action" value="logout">
+      <input type="hidden" name="csrf" value="${hash(readCookie(request, "romava_team_session") + ":logout")}">
+      <button class="logout">خروج</button>
+    </form>
+  </header>
+  <div id="team-menu" class="team-menu" popover>
+    <div class="team-menu-heading">
+      <strong>پنل تیم</strong>
+      <button type="button" popovertarget="team-menu" popovertargetaction="hide" aria-label="بستن منو">×</button>
+    </div>
+    <nav class="team-nav team-menu-links" aria-label="بخش‌های پنل تیم">
     <a href="/team/meetings"${active === "meetings" ? ' aria-current="page"' : ""}>پاسخ جلسات</a>
     <a href="/team/meetings?view=requests"${active === "requests" ? ' aria-current="page"' : ""}>درخواست‌های سایت</a>
     <a href="/team/meetings?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
     <a href="/team/meetings?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a>
-  </nav>`;
+    <a href="/team/meetings?view=shoots"${active === "shoots" ? ' aria-current="page"' : ""}>چک‌لیست آفیش</a>
+    </nav>
+  </div>`;
 }
 
 function websiteQc(request: Request) {
@@ -119,6 +157,17 @@ export async function GET(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
   if (!teamAuthenticated(request)) return login(request);
   const url = new URL(request.url);
+  if (url.searchParams.get("view") === "shoots") {
+    const navigation = teamNavigation(request, "shoots");
+    try {
+      const { renderShootChecklists } = await import("@/lib/shoot-checklists");
+      const csrf = hash(readCookie(request, "romava_team_session") + ":shoot-checklists");
+      const body = await renderShootChecklists(url, { escape, csrf, newId: loginNonce().slice(0, 24) });
+      return new Response(page(navigation + body), { headers });
+    } catch {
+      return new Response(page(navigation + '<p class="notice" role="alert">دسترسی به چک‌لیست آفیش فعلاً ممکن نیست. دوباره تلاش کن.</p>'), { status: 503, headers });
+    }
+  }
   if (url.searchParams.get("view") === "qc") return websiteQc(request);
   if (url.searchParams.get("view") === "analytics") return websiteAnalytics(request, url);
   if (url.searchParams.get("view") === "requests") return websiteRequests(request, url);
@@ -131,7 +180,20 @@ export async function POST(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Unsupported form", { status: 415, headers });
   const form = await request.formData();
-  if (form.get("action") === "analytics-test") {
+  const action = form.get("action");
+  if (typeof action === "string" && action.startsWith("shoot-")) {
+    const csrf = hash(readCookie(request, "romava_team_session") + ":shoot-checklists");
+    if (!teamAuthenticated(request) || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
+    try {
+      const { changeShootChecklist } = await import("@/lib/shoot-checklists");
+      const location = await changeShootChecklist(action, form);
+      if (location) return new Response(null, { status: 303, headers: { ...headers, Location: location } });
+      return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">اطلاعات فرم رو چک کن.</p><a href="/team/meetings?view=shoots">برگشت به آفیش‌ها</a>'), { status: 400, headers });
+    } catch {
+      return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">ذخیره انجام نشد. به فرم برگرد و دوباره تلاش کن.</p>'), { status: 503, headers });
+    }
+  }
+  if (action === "analytics-test") {
     const csrf = hash(readCookie(request, "romava_team_session") + ":analytics-test");
     const enabled = form.get("enabled");
     if (!teamAuthenticated(request) || form.get("csrf") !== csrf || (enabled !== "0" && enabled !== "1")) {
