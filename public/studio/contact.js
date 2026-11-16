@@ -9,6 +9,7 @@ document.querySelectorAll('[data-contact], [data-plan]').forEach(button => {
     if (button.dataset.plan) collaboration.value = button.dataset.plan;
     contactStatus.textContent = '';
     contactDialog.showModal();
+    window.romavaAnalyticsEvent?.('romava_contact_open');
   });
 });
 contactDialog.querySelector('.close').addEventListener('click', () => contactDialog.close());
@@ -31,6 +32,7 @@ contactForm.addEventListener('submit', async event => {
     }
     if (!response.ok) throw new Error('Contact submission failed');
     contactForm.reset();
+    window.romavaAnalyticsEvent?.('romava_contact_success');
     contactStatus.textContent = 'درخواستت ثبت شد. برای هماهنگی توی واتساپ بهت پیام می‌دیم.';
   } catch {
     contactStatus.textContent = 'درخواست ثبت نشد. دوباره امتحان کن.';

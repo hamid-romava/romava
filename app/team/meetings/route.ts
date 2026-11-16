@@ -8,15 +8,16 @@ export const dynamic = "force-dynamic";
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
 const headers = { ...htmlHeaders, "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" };
 const labels: Record<string, string> = { liked: "چی به دلش نشست؟", improve: "کجا جای بهترشدن داره؟", results: "خبرهای پشت پیج", "next-month": "رویدادها و اتفاق‌های پیش رو", ideas: "ایده‌های پیشنهادی" };
-function page(body: string) { return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پنل تیم روماوا</title><style>@font-face{font-family:Yekan;src:url('/fonts/YekanBakh-Regular.ttf')}*{box-sizing:border-box}body{font:14px/2 Yekan,sans-serif;background:#f7f8fa;color:#26324a;margin:0}.page{max-width:900px;margin:auto;padding:28px 20px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6f0;padding-bottom:20px}header img{width:100px}h1{font-size:26px;margin:30px 0 8px}p{color:#788397}button,input{font:inherit}button{cursor:pointer;background:#2855f5;color:white;border:0;border-radius:10px;padding:10px 20px}input{display:block;width:100%;border:1px solid #dce2ef;padding:12px;border-radius:10px;margin:8px 0 18px}.login{max-width:390px;margin:60px auto}.card{background:white;border:1px solid #e1e6ef;border-radius:16px;margin:16px 0;padding:20px}summary{cursor:pointer;font-weight:bold}small{color:#8792a5}.answer{padding:15px 0;border-bottom:1px solid #edf0f6}.answer:last-child{border:0}.answer h3{font-size:13px;margin:0}.answer p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;color:#58677e}.notice{background:#fff3d6;border-radius:12px;padding:15px}.logout{background:white;color:#68738c;border:1px solid #dce2ef}label{display:block}.team-nav,.paging{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.team-nav a,.paging a{padding:6px 14px;border:1px solid #dce2ef;border-radius:10px;color:#26324a;text-decoration:none;background:white}.team-nav a[aria-current]{background:#2855f5;color:white;border-color:#2855f5}.contact-meta{margin:10px 0 0}.contact-meta div{display:flex;gap:10px;flex-wrap:wrap}.contact-meta dt{color:#58677e}.contact-meta dd{margin:0;overflow-wrap:anywhere}</style></head><body><div class="page">${body}</div></body></html>`; }
+function page(body: string) { return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پنل تیم روماوا</title><style>@font-face{font-family:Yekan;src:url('/fonts/YekanBakh-Regular.ttf')}*{box-sizing:border-box}body{font:14px/2 Yekan,sans-serif;background:#f7f8fa;color:#26324a;margin:0}.page{max-width:900px;margin:auto;padding:28px 20px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6f0;padding-bottom:20px}header img{width:100px}h1{font-size:26px;margin:30px 0 8px}p{color:#788397}button,input{font:inherit}button{cursor:pointer;background:#2855f5;color:white;border:0;border-radius:10px;padding:10px 20px}input{display:block;width:100%;border:1px solid #dce2ef;padding:12px;border-radius:10px;margin:8px 0 18px}.login{max-width:390px;margin:60px auto}.card{background:white;border:1px solid #e1e6ef;border-radius:16px;margin:16px 0;padding:20px}summary{cursor:pointer;font-weight:bold}small{color:#8792a5}.answer{padding:15px 0;border-bottom:1px solid #edf0f6}.answer:last-child{border:0}.answer h3{font-size:13px;margin:0}.answer p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;color:#58677e}.notice{background:#fff3d6;border-radius:12px;padding:15px}.logout{background:white;color:#68738c;border:1px solid #dce2ef}label{display:block}.team-nav,.paging{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.team-nav a,.paging a{padding:6px 14px;border:1px solid #dce2ef;border-radius:10px;color:#26324a;text-decoration:none;background:white}.team-nav a[aria-current]{background:#2855f5;color:white;border-color:#2855f5}.contact-meta{margin:10px 0 0}.contact-meta div{display:flex;gap:10px;flex-wrap:wrap}.contact-meta dt{color:#58677e}.contact-meta dd{margin:0;overflow-wrap:anywhere}.analytics-list{list-style:none;padding:0;margin:0}.analytics-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0}.analytics-list li+li{border-top:1px solid #e5e8f0}</style></head><body><div class="page">${body}</div></body></html>`; }
 function login(request: Request, error = "") {
   const nonce = loginNonce();
   return new Response(page(`<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
 }
-function teamNavigation(request: Request, active: "meetings" | "requests") {
+function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics") {
   return `<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><form method="post" action="/team/meetings"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="${hash(readCookie(request, "romava_team_session") + ":logout")}"><button class="logout">خروج</button></form></header><nav class="team-nav" aria-label="بخش‌های پنل تیم">
     <a href="/team/meetings"${active === "meetings" ? ' aria-current="page"' : ""}>پاسخ جلسات</a>
     <a href="/team/meetings?view=requests"${active === "requests" ? ' aria-current="page"' : ""}>درخواست‌های سایت</a>
+    <a href="/team/meetings?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
   </nav>`;
 }
 
@@ -59,10 +60,45 @@ async function websiteRequests(request: Request, url: URL) {
   }
 }
 
+async function websiteAnalytics(request: Request, url: URL) {
+  const navigation = teamNavigation(request, "analytics");
+  const days = url.searchParams.get("days") === "7" ? 7 : 30;
+  const rangeLinks = ([7, 30] as const).map(range =>
+    `<a href="?view=analytics&amp;days=${range}"${days === range ? ' aria-current="true"' : ""}>${range === 7 ? "۷" : "۳۰"} روز گذشته</a>`
+  ).join("");
+  const heading = `${navigation}<h1>آمار سایت</h1><nav class="team-nav" aria-label="بازه آمار">${rangeLinks}</nav>`;
+  const number = new Intl.NumberFormat("fa-IR");
+  const channelLabels = new Map([
+    ["Direct", "مستقیم"], ["Organic Search", "جست‌وجوی طبیعی"], ["Organic Social", "شبکه‌های اجتماعی"],
+    ["Referral", "لینک از سایت‌های دیگه"], ["Paid Search", "تبلیغات جست‌وجو"], ["Paid Social", "تبلیغات شبکه‌های اجتماعی"],
+    ["Email", "ایمیل"], ["Unassigned", "کانال نامشخص"],
+  ]);
+  try {
+    const { siteAnalytics } = await import("@/lib/site-analytics");
+    const data = await siteAnalytics(days);
+    if (!data) return new Response(page(heading + '<p class="notice">اتصال به گوگل آنالیتیکس هنوز فعال نشده.</p>'), { headers });
+    const list = (rows: { label: string; count: number }[], labels?: Map<string, string>) => rows.map(
+      ({ label, count }) => `<li>${escape(labels?.get(label) ?? label)} <strong>${number.format(count)}</strong></li>`
+    ).join("");
+    return new Response(page(`${heading}
+      <section class="card"><h2>از بازدید تا ثبت درخواست</h2>
+        <p>تعداد کاربران هر مرحله، جداگانه شمرده شده. آمار تا پایان دیروزه.</p>
+        <ol class="analytics-list">${list(data.stages)}</ol>
+      </section>
+      <section class="card"><h2>از کجا اومدن؟</h2>
+        <p>تعداد نشست‌هایی که صفحهٔ اصلی رو دیدن، به تفکیک کانال ورود.</p>
+        ${data.channels.length ? `<ul class="analytics-list">${list(data.channels, channelLabels)}</ul>` : '<p>توی این بازه، ورودی‌ای ثبت نشده.</p>'}
+      </section>`), { headers });
+  } catch {
+    return new Response(page(heading + '<p class="notice" role="alert">آمار گوگل فعلاً در دسترس نیست. دوباره تلاش کن.</p>'), { status: 503, headers });
+  }
+}
+
 export async function GET(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
   if (!teamAuthenticated(request)) return login(request);
   const url = new URL(request.url);
+  if (url.searchParams.get("view") === "analytics") return websiteAnalytics(request, url);
   if (url.searchParams.get("view") === "requests") return websiteRequests(request, url);
   try {
     const rows = await listMeetings();
