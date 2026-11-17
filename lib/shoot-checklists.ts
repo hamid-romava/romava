@@ -159,7 +159,7 @@ export async function renderShootChecklists(url: URL, { escape, csrf, newId }: R
       </a>`;
 
     return `<p><a href="${path}">← برگشت به آفیش‌ها</a></p><h1><bdi dir="ltr">${escape(shootName(shoot.client, shoot.contract, shoot.number))}</bdi></h1>
-      <p>${identity(shoot, escape)}${shoot.closedAt ? " · آفیش بسته‌شده" : ""}</p>
+      ${shoot.closedAt ? "<p>آفیش بسته‌شده</p>" : ""}
       <section class="shoot-progress" aria-label="پیشرفت آفیش">
         <div class="shoot-progress-label"><strong>پیشرفت آفیش</strong><span>${format.format(finished)} از ${format.format(stages.length)} مرحله تکمیل شده</span></div>
         <progress aria-label="پیشرفت آفیش" value="${finished}" max="${stages.length}"></progress>

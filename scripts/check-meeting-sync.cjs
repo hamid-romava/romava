@@ -67,6 +67,6 @@ assert(booking.validateBooking({...valid,shootDate:'2026-11-15'},'2026-11-08'));
 
 for(const secondPaymentDate of [null,'2026-11-08','2026-11-07','2026-11-23'])assert.equal(booking.validateBooking({...valid,secondPaymentDate},'2026-11-08'),null);assert.equal(booking.validateBooking({...valid,secondPaymentDate:'2026-11-09'},'2026-11-08').secondPaymentDate,'2026-11-09');
 
-assert.equal(booking.validateBooking({...valid,totalPrice:1,firstPaymentAmount:1},'2026-11-08').totalPrice,87000000);assert.equal(booking.validateBooking(valid,'2026-11-08').firstPaymentAmount,43500000);assert.equal(booking.validateBooking({...valid,paymentModel:'full'},'2026-11-08').firstPaymentAmount,87000000);assert.equal(booking.validateBooking({...valid,paymentModel:'full'},'2026-11-08').secondPaymentAmount,null);
+assert.equal(booking.validateBooking({...valid,totalPrice:1,firstPaymentAmount:1},'2026-11-08').totalPrice,107000000);assert.equal(booking.validateBooking(valid,'2026-11-08').firstPaymentAmount,53500000);assert.equal(booking.validateBooking({...valid,paymentModel:'full'},'2026-11-08').firstPaymentAmount,107000000);assert.equal(booking.validateBooking({...valid,paymentModel:'full'},'2026-11-08').secondPaymentAmount,null);
 
 assert(booking.validateBooking({...valid,firstPaymentDate:'2026-11-09'},'2026-11-08'));
