@@ -103,6 +103,11 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   assert((await chooser.text()).includes('گزارش کدوم ماه رو می‌خوای؟'));
   assert.equal((await dashboard.GET(new Request(`https://example.com/r/${tokenA}?month=3`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) })).status, 404);
   assert.equal((await dashboard.GET(new Request(`https://example.com/r/${tokenB}?month=1`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenB }) })).status, 303);
+  env.ROMAVA_REPORT_LOGIN_NAMES = JSON.stringify({ [hash(tokenA)]: 'نمونه نام خانوادگی' });
+  const renamed = await call(admin, '/admin', { method: 'POST', username: 'نمونه نام خانوادگی', password: 'test-a-strong-password' });
+  assert.equal(renamed.status, 303);
+  assert.equal(renamed.headers.get('location'), '/r/' + tokenA);
+  assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password' })).status, 401);
   env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
   console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF token, 404/503');
 })().catch(error => { console.error(error); process.exitCode = 1; });

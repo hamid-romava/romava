@@ -13,10 +13,14 @@ export type ReportData = { name: string; [key: string]: unknown };
 export type Report = { token: string; passwordHash: string; data: ReportData; months?: Record<string, ReportData> };
 export const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export const normalize = (value: string) => value.normalize("NFKC").replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[\s\u200c]+/g, " ").trim().replace(/^دکتر\s+/, "");
-export const username = (report: Report) => normalize(report.data.name);
+export function username(report: Report) {
+  const loginNames = JSON.parse(process.env.ROMAVA_REPORT_LOGIN_NAMES || "{}");
+  const loginName = loginNames[hash(report.token)];
+  return normalize(typeof loginName === "string" && loginName.trim() ? loginName : report.data.name);
+}
 export const equal = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const cookieName = "romava_report_session";
-const signature = (report: Report, expiry: string) => createHmac("sha256", report.passwordHash).update(JSON.stringify(["report-session-v1", report.token, username(report), expiry])).digest("hex");
+const signature = (report: Report, expiry: string) => createHmac("sha256", report.passwordHash).update(JSON.stringify(["report-session-v1", report.token, normalize(report.data.name), expiry])).digest("hex");
 
 export function reports(): Record<string, Report> {
   const parsed = JSON.parse(process.env.ROMAVA_REPORTS_CONFIG || "{}");
