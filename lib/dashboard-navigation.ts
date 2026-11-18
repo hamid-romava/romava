@@ -31,7 +31,7 @@ const css=`
   gap: 2px;
   background: linear-gradient(145deg, #f0f4ff, #fdfdfe 60%, #fffaeb);
   border-radius: 999px;
-  box-shadow: 0 4px 16px #15243c14;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
 }
 .app-tabs-floating a {
   min-width: 0;
@@ -48,6 +48,15 @@ const css=`
 }
 body:has(.app-tabs-floating) {
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+}
+body:has(.app-tabs-floating)::after {
+  content: "";
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 29;
+  height: calc(66px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 21%));
+  pointer-events: none;
 }
 body:has(.app-tabs):not(:has(.app-tabs-floating)){padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .app-drawer,.team-menu{position:fixed;inset:0 0 auto auto;width:min(360px,88vw);height:100vh;height:100dvh;max-width:none;max-height:none;box-sizing:border-box;margin:0;padding:20px;border:0;background:#fff;color:#26324a;overflow-y:auto;overscroll-behavior:contain;box-shadow:-12px 0 44px #14254433}
