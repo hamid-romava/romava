@@ -37,6 +37,7 @@ export const reportTemplate = String.raw`<!doctype html>
 .income-chip::after{inset:8px 0;border-block:1px solid #805c40}
 .income-incoming{color:var(--card-gold);font-size:18px;line-height:1}
 @media(prefers-reduced-motion:no-preference){.income-spotlight summary:is(:hover,:focus-visible) .income-incoming{animation:income-in .55s ease-out both}@keyframes income-in{from{transform:translateY(-7px);opacity:.35}to{transform:translateY(0);opacity:1}}}
+
 </style>
 </head>
 <body>
@@ -68,7 +69,7 @@ const doctorReports={report:__REPORT_DATA__};
 const d=doctorReports.report;
 const fa=(n,decimals=0)=>new Intl.NumberFormat('fa-IR',{maximumFractionDigits:decimals}).format(n);
 const set=(id,text)=>document.getElementById(id).textContent=text;
-const formatK=n=>new Intl.NumberFormat('en-US',{maximumFractionDigits:3,useGrouping:false}).format(Number(n)/1000)+' k';
+const formatK=n=>new Intl.NumberFormat('en-US',{maximumFractionDigits:1,useGrouping:false}).format(Number(n)/1000)+' k';
 const formatViews=n=>n>=1000000?fa(n/1000000,1)+' میلیون':fa(n);
 const beforeViews=Number(d.beforeViewsK)*1000, totalViews=Number(d.viewGainK)*1000;
 const avgViews=totalViews/Number(d.postCount), viewRatio=beforeViews>0?avgViews/beforeViews:0;

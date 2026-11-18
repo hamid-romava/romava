@@ -77,17 +77,18 @@ export function clientNavigation(html: string, token: string, current: string) {
   const hero=html.match(/<header[^>]*>([\s\S]*?)<\/header>/);
   if(!hero)return html;
   const home='/r/'+token;
+  const monthly=home+'?view=monthly';
   const isMeeting=current==='/r/meeting';
   const archived=isMeeting?html.match(/<details class="history">[\s\S]*?<\/details>/)?.[0]:null;
   const context=isMeeting?html.match(/<p class="meeting-context" id="meeting-context">([\s\S]*?)<\/p>/):null;
   const picker=hero[1].match(/<form class="month-picker"[\s\S]*?<\/form>/)?.[0]??'';
-  const title=context?.[1]??(({ '/r/preparation':'آمادگی روز آفیش','/r/plans':'طرح‌ها و قیمت‌ها','/r/meeting':'جلسه ماهانه' } as Record<string, string>)[current]??'گزارش عملکرد');
-  const header=`<header class="topbar app-header"><div class="app-brand"><button class="app-button" type="button" popovertarget="client-drawer" aria-label="منوی بیشتر">${icon('menu')}</button></div><p class="app-title"${isMeeting?' id="meeting-context"':''}>${title}</p>${current===home?'':back(home,'بازگشت به داشبورد')}${current===home?'<span id="accountName" hidden></span>':''}${picker}</header>`;
+  const title=context?.[1]??(current===home+'?view=monthly'?'گزارش ماهانه':null)??(({ '/r/preparation':'آمادگی روز آفیش','/r/plans':'طرح‌ها و قیمت‌ها','/r/meeting':'جلسه ماهانه' } as Record<string, string>)[current]??'گزارش عملکرد');
+  const header=`<header class="topbar app-header"><div class="app-brand"><button class="app-button" type="button" popovertarget="client-drawer" aria-label="منوی بیشتر">${icon('menu')}</button></div><p class="app-title"${isMeeting?' id="meeting-context"':''}>${title}</p>${current===home?'':back(home,'بازگشت به داشبورد')}${current.startsWith(home)?'<span id="accountName" hidden></span>':''}${picker}</header>`;
   const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><img class="drawer-logo" src="${dashboardLogo}" alt="روماوا"><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌ها و قیمت‌ها</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
   html=html.replace(hero[0],()=>header);
   if(archived)html=html.replace(archived,'');
   if(context)html=html.replace(context[0],'');
-  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>drawer+tabs([[home,'گزارش عملکرد','home'],['/r/preparation','آمادگی آفیش','prep'],['/r/meeting','جلسه ماهانه و تمدید','meet']],current, true)+'</body>');
+  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>drawer+tabs([[home,'گزارش عملکرد','home'],[monthly,'گزارش ماهانه','chart'],['/r/preparation','آمادگی آفیش','prep'],['/r/meeting','جلسه ماهانه و تمدید','meet']],current, true)+'</body>');
 }
 
 export function teamNavigationLayout(html: string, view: string, backToShoots: boolean) {

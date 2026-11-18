@@ -24,6 +24,13 @@ export function reports(): Record<string, Report> {
   for (const [digest, report] of Object.entries(parsed) as [string, Report][]) {
     if (!/^[a-f0-9]{64}$/.test(digest) || !report || !/^[a-f0-9]{48}$/.test(report.token) || hash(report.token) !== digest || !/^[a-f0-9]{64}$/.test(report.passwordHash) || typeof report.data?.name !== "string") throw new Error("Invalid report entry");
   }
+  const monthlyConfig = process.env.ROMAVA_REPORT_MONTHS_CONFIG;
+  if (monthlyConfig) {
+    const { digest, months } = JSON.parse(monthlyConfig);
+    if (/^[a-f0-9]{64}$/.test(digest) && Object.hasOwn(parsed, digest)) {
+      parsed[digest].months = { ...parsed[digest].months, ...months };
+    }
+  }
   return parsed;
 }
 

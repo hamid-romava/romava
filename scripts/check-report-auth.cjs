@@ -51,7 +51,7 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
     const setCookie = valid.headers.get('set-cookie');
     for (const flag of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Max-Age=28800', `Path=/r`]) assert(setCookie.includes(flag));
     const cookie = setCookie.split(';')[0];
-    const result = await call(dashboard, `/r/${report.token}`, { cookie }); const html = await result.text();
+    const result = await dashboard.GET(new Request(`https://example.com/r/${report.token}${report.months ? '?month=1' : ''}`, { headers: { cookie } }), { params: Promise.resolve({ token: report.token }) }); const html = await result.text();
     assert.equal(result.status, 200); assert(html.includes(report.data.marker)); assert(html.includes('خروج از حساب')); assert(!html.includes('__REPORT_DATA__'));
     const otherToken = report === reportA ? tokenB : tokenA;
     assert.equal((await call(dashboard, `/r/${otherToken}`, { cookie })).status, 303);
@@ -96,7 +96,11 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   assert(monthHtml.includes('"followerGain":111'));
   assert(!monthHtml.includes('"followerGain":222'));
   const defaultMonth = await dashboard.GET(new Request(`https://example.com/r/${tokenA}`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) });
-  assert((await defaultMonth.text()).includes('"followerGain":222'));
+  const overview = await defaultMonth.text();
+  assert(overview.includes('گزارش کلی عملکرد'));
+  assert(overview.includes('۳۳۳'));
+  const chooser = await dashboard.GET(new Request(`https://example.com/r/${tokenA}?view=monthly`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) });
+  assert((await chooser.text()).includes('گزارش کدوم ماه رو می‌خوای؟'));
   assert.equal((await dashboard.GET(new Request(`https://example.com/r/${tokenA}?month=3`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenA }) })).status, 404);
   assert.equal((await dashboard.GET(new Request(`https://example.com/r/${tokenB}?month=1`, { headers: { cookie: monthCookie } }), { params: Promise.resolve({ token: tokenB }) })).status, 303);
   env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
