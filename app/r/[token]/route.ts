@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: Context) {
   const monthly = selected && report.months ? report.months[selected] : report.data;
   const data = JSON.stringify({ ...monthly, name: report.data.name }).replace(/</g, "\\u003c");
   const labels: Record<string, string> = { "1": "ماه اول", "2": "ماه دوم", "3": "ماه سوم", "4": "ماه چهارم", "5": "ماه پنجم", "6": "ماه ششم", "7": "ماه هفتم", "8": "ماه هشتم", "9": "ماه نهم", "10": "ماه دهم", "11": "ماه یازدهم", "12": "ماه دوازدهم" };
-  const monthPicker = months.length ? `<form class="month-picker" method="get"><label for="report-month">گزارش ماهانه</label><div class="month-controls"><select id="report-month" name="month">${months.map(month => `<option value="${month}"${month === selected ? " selected" : ""}>${labels[month] || `ماه ${new Intl.NumberFormat("fa-IR").format(Number(month))}`}</option>`).join("")}</select><button type="submit">نمایش</button></div></form>` : "";
+  const monthPicker = months.length ? `<form class="month-picker" method="get"><div class="month-controls"><select id="report-month" name="month" aria-label="انتخاب ماه گزارش">${months.map(month => `<option value="${month}"${month === selected ? " selected" : ""}>${labels[month] || `ماه ${new Intl.NumberFormat("fa-IR").format(Number(month))}`}</option>`).join("")}</select><button type="submit">نمایش</button></div></form>` : "";
   const html = reportTemplate.replace("__REPORT_DATA__", () => data).replace("__MONTH_PICKER__", () => monthPicker);
   return new Response(clientNavigation(html, token, `/r/${token}`), { headers: htmlHeaders });
 }

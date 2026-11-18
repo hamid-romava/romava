@@ -1,6 +1,6 @@
 import { getPricing, pricingFromForm, savePricing } from "../../../lib/pricing-store";
 import { pricedPlans } from "../../../lib/pricing-plans";
-import { teamNavigationLayout } from "../../../lib/dashboard-navigation";
+import { dashboardLogo, teamNavigationLayout } from "../../../lib/dashboard-navigation";
 import type { MongoClient } from "mongodb";
 import { bookingLines } from "@/lib/meeting-booking";
 import { hash, equal, htmlHeaders } from "@/lib/report-auth";
@@ -26,7 +26,7 @@ function page(body: string, view = "", backToShoots = false) { return teamNaviga
 .card textarea{display:block;width:100%;font:inherit;color:inherit;border:1px solid #dce2ef;border-radius:10px;padding:12px;margin:8px 0 18px;resize:vertical}</style></head><body><div class="page">${body}</div></body></html>`, view, backToShoots); }
 function login(request: Request, error = "") {
   const nonce = loginNonce();
-  return new Response(page(`<header><img src="/studio/assets/romava-earth-logo.svg" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
+  return new Response(page(`<header><img src="${dashboardLogo}" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
 }
 const analyticsTestCookie = "romava_ga_test";
 
@@ -36,7 +36,6 @@ function teamNavigation(request: Request, active: "meetings" | "requests" | "ana
       <button type="button" class="team-menu-toggle" popovertarget="team-menu" aria-label="منوی پنل تیم">
         <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
       </button>
-      <img src="/studio/assets/romava-earth-logo.svg" alt="روماوا">
     </div>
     <form method="post" action="/team/meetings">
       <input type="hidden" name="action" value="logout">
@@ -46,7 +45,7 @@ function teamNavigation(request: Request, active: "meetings" | "requests" | "ana
   </header>
   <div id="team-menu" class="team-menu" popover>
     <div class="team-menu-heading">
-      <strong>پنل تیم</strong>
+      <img class="drawer-logo" src="${dashboardLogo}" alt="روماوا">
       <button type="button" popovertarget="team-menu" popovertargetaction="hide" aria-label="بستن منو">×</button>
     </div>
     <nav class="team-nav team-menu-links" aria-label="بخش‌های پنل تیم">

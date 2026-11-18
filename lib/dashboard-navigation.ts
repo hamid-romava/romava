@@ -1,3 +1,5 @@
+export const dashboardLogo = "/studio/assets/romava-earth-logo.svg";
+
 const paths = {
  home:'M3 10l9-7 9 7v10H3zM9 20v-7h6v7',
  prep:'M5 5h14v15H5zM8 3v4m8-4v4m-8 6 3 3 5-6',
@@ -14,8 +16,8 @@ const icon = (name: Icon) =>`<svg width="22" height="22" viewBox="0 0 24 24" fil
 const css=`
 .app-header{display:grid!important;grid-template-columns:minmax(60px,1fr) minmax(0,2fr) minmax(60px,1fr);align-items:center;gap:8px}
 .app-header>.app-brand,.app-header>.team-brand{grid-area:1/1;display:flex;align-items:center;gap:6px;min-width:0}
-.app-brand>a{min-width:0}.app-brand img,.app-header .team-brand img{display:block;width:90px;max-width:100%;min-width:0;height:auto;object-fit:contain}.team-menu-toggle{flex:none}
-.app-brand .brand-note{display:none}.app-header .account{display:none}
+.drawer-logo{display:block;width:min(148px,100%);height:auto}.team-menu-toggle{flex:none}
+.app-header .account{display:none}
 .app-header>.app-title,.app-header>h1{grid-area:1/2;margin:0;text-align:center;font-size:clamp(13px,3.2vw,19px);line-height:1.55;font-weight:700;overflow-wrap:anywhere;color:#26324a}
 .app-header .month-picker{grid-area:2/1/3/-1}.app-header>.app-back{grid-area:1/3;justify-self:end}
 .app-button{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;padding:0;border:1px solid #dce3f0;border-radius:12px;color:#2847a8;background:white;font:inherit;text-decoration:none;cursor:pointer}
@@ -24,24 +26,28 @@ const css=`
 
 .app-tabs.app-tabs-floating {
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  width: min(calc(100% - 32px), 560px);
-  padding: 6px;
-  gap: 4px;
+  width: min(calc(100% - 48px), 408px);
+  padding: 4px;
+  gap: 2px;
+  background: linear-gradient(145deg, #f0f4ff, #fdfdfe 60%, #fffaeb);
   border-radius: 999px;
-  box-shadow: 0 8px 28px #15243c20;
+  box-shadow: 0 4px 16px #15243c14;
 }
 .app-tabs-floating a {
   min-width: 0;
-  min-height: 48px;
+  min-height: 44px;
   border-radius: 999px;
-  padding-inline: 6px;
+  gap: 2px;
+  padding: 2px 4px;
+  font-size: 11px;
 }
+.app-tabs-floating svg { width: 18px; height: 18px; }
 .app-tabs-floating a:focus-visible {
   outline: 2px solid #244df0;
   outline-offset: -2px;
 }
 body:has(.app-tabs-floating) {
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 body:has(.app-tabs):not(:has(.app-tabs-floating)){padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .app-drawer,.team-menu{position:fixed;inset:0 0 auto auto;width:min(360px,88vw);height:100vh;height:100dvh;max-width:none;max-height:none;box-sizing:border-box;margin:0;padding:20px;border:0;background:#fff;color:#26324a;overflow-y:auto;overscroll-behavior:contain;box-shadow:-12px 0 44px #14254433}
@@ -65,11 +71,10 @@ export function clientNavigation(html: string, token: string, current: string) {
   const isMeeting=current==='/r/meeting';
   const archived=isMeeting?html.match(/<details class="history">[\s\S]*?<\/details>/)?.[0]:null;
   const context=isMeeting?html.match(/<p class="meeting-context" id="meeting-context">([\s\S]*?)<\/p>/):null;
-  const brand=hero[1].match(/<a\b[^>]*href="\/"[^>]*>[\s\S]*?<\/a>/)?.[0].replace('/brand/romava-logo-focus.svg','/studio/assets/romava-earth-logo.svg');
   const picker=hero[1].match(/<form class="month-picker"[\s\S]*?<\/form>/)?.[0]??'';
   const title=context?.[1]??(({ '/r/preparation':'آمادگی روز آفیش','/r/plans':'طرح‌ها و قیمت‌ها','/r/meeting':'جلسه ماهانه' } as Record<string, string>)[current]??'گزارش عملکرد');
-  const header=`<header class="topbar app-header"><div class="app-brand"><button class="app-button" type="button" popovertarget="client-drawer" aria-label="منوی بیشتر">${icon('menu')}</button>${brand??''}</div><p class="app-title"${isMeeting?' id="meeting-context"':''}>${title}</p>${current===home?'':back(home,'بازگشت به داشبورد')}${current===home?'<span id="accountName" hidden></span>':''}${picker}</header>`;
-  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><strong>منوی داشبورد</strong><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌ها و قیمت‌ها</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
+  const header=`<header class="topbar app-header"><div class="app-brand"><button class="app-button" type="button" popovertarget="client-drawer" aria-label="منوی بیشتر">${icon('menu')}</button></div><p class="app-title"${isMeeting?' id="meeting-context"':''}>${title}</p>${current===home?'':back(home,'بازگشت به داشبورد')}${current===home?'<span id="accountName" hidden></span>':''}${picker}</header>`;
+  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><img class="drawer-logo" src="${dashboardLogo}" alt="روماوا"><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌ها و قیمت‌ها</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
   html=html.replace(hero[0],()=>header);
   if(archived)html=html.replace(archived,'');
   if(context)html=html.replace(context[0],'');
