@@ -21,7 +21,7 @@ const booking = load('lib/meeting-booking.ts');
 const auth = load('lib/report-auth.ts');
 const login = load('lib/report-login.ts');
 const admin = load('app/admin/route.ts', { '@/lib/report-login': login, '@/lib/report-auth': auth });
-const meeting = load('app/r/meeting/route.ts', { '@/lib/meeting-template': load('lib/meeting-template.ts', { '@/lib/meeting-booking': booking }), '@/lib/report-auth': auth, '@/lib/meeting-booking': booking, '@/lib/meeting-store': { currentCycle: () => '2026-11' } });
+const meeting = load('app/r/meeting/route.ts', { '../../../lib/pricing-store': { getPricing: async () => load('lib/pricing-plans.ts').defaultPricing }, '@/lib/meeting-template': load('lib/meeting-template.ts', { '@/lib/meeting-booking': booking }), '@/lib/report-auth': auth, '@/lib/meeting-booking': booking, '@/lib/meeting-store': { currentCycle: () => '2026-11' } });
 const preparation = load('app/r/preparation/route.ts', { '@/lib/preparation-template': load('lib/preparation-template.ts'), '@/lib/report-auth': auth });
 const dashboard = load('app/r/[token]/route.ts', { '@/lib/report-template': load('lib/report-template.ts'), '@/lib/report-auth': auth });
 async function call(route, path, { method = 'GET', username, password, cookie, origin, action, omitCsrf = false } = {}) {

@@ -14,20 +14,49 @@ const icon = (name: Icon) =>`<svg width="22" height="22" viewBox="0 0 24 24" fil
 const css=`
 .app-header{display:grid!important;grid-template-columns:minmax(60px,1fr) minmax(0,2fr) minmax(60px,1fr);align-items:center;gap:8px}
 .app-header>.app-brand,.app-header>.team-brand{grid-area:1/1;display:flex;align-items:center;gap:6px;min-width:0}
-.app-brand img,.app-header .team-brand img{display:block;width:32px;max-width:100%}
+.app-brand>a{min-width:0}.app-brand img,.app-header .team-brand img{display:block;width:90px;max-width:100%;min-width:0;height:auto;object-fit:contain}.team-menu-toggle{flex:none}
 .app-brand .brand-note{display:none}.app-header .account{display:none}
 .app-header>.app-title,.app-header>h1{grid-area:1/2;margin:0;text-align:center;font-size:clamp(13px,3.2vw,19px);line-height:1.55;font-weight:700;overflow-wrap:anywhere;color:#26324a}
 .app-header .month-picker{grid-area:2/1/3/-1}.app-header>.app-back{grid-area:1/3;justify-self:end}
 .app-button{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;padding:0;border:1px solid #dce3f0;border-radius:12px;color:#2847a8;background:white;font:inherit;text-decoration:none;cursor:pointer}
 .app-tabs{position:fixed;inset:auto 0 0;z-index:30;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;width:min(100%,560px);margin:auto;padding:7px 8px max(8px,env(safe-area-inset-bottom));border:1px solid #dde4f0;border-radius:18px 18px 0 0;background:white;box-shadow:0 -8px 28px #15243c12;color:#526078}
 .app-tabs a{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;min-height:52px;padding:3px;border-radius:11px;font-size:12px;line-height:1.4;text-align:center;color:inherit;text-decoration:none}.app-tabs a[aria-current]{background:#eef2ff;color:#244df0;font-weight:bold}
-body:has(.app-tabs){padding-bottom:calc(80px + env(safe-area-inset-bottom))}
-.app-drawer{position:fixed;inset:0 0 auto auto;width:min(340px,88vw);height:100dvh;max-height:none;margin:0;padding:20px;border:0;background:white;color:#26324a;overflow:auto}.app-drawer:popover-open,.team-menu:popover-open{display:flex;flex-direction:column}.app-drawer::backdrop{background:#101b3280}
-.app-drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.app-drawer form,.team-menu form{margin-top:auto;padding-top:24px}
-.app-drawer .app-link{display:block;width:100%;padding:10px 14px;border:1px solid #dce3f0;border-radius:11px;background:#f4f6fb;color:inherit;text-align:right;text-decoration:none;font:inherit}.app-link+.app-link{margin-top:8px}.app-drawer .history{margin:0 0 12px}
-@media(prefers-reduced-motion:no-preference){.app-drawer:popover-open{animation:client-drawer-in .24s ease-out}@keyframes client-drawer-in{from{transform:translateX(100%)}to{transform:translateX(0)}}}
+
+.app-tabs.app-tabs-floating {
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: min(calc(100% - 32px), 560px);
+  padding: 6px;
+  gap: 4px;
+  border-radius: 999px;
+  box-shadow: 0 8px 28px #15243c20;
+}
+.app-tabs-floating a {
+  min-width: 0;
+  min-height: 48px;
+  border-radius: 999px;
+  padding-inline: 6px;
+}
+.app-tabs-floating a:focus-visible {
+  outline: 2px solid #244df0;
+  outline-offset: -2px;
+}
+body:has(.app-tabs-floating) {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+body:has(.app-tabs):not(:has(.app-tabs-floating)){padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+.app-drawer,.team-menu{position:fixed;inset:0 0 auto auto;width:min(360px,88vw);height:100vh;height:100dvh;max-width:none;max-height:none;box-sizing:border-box;margin:0;padding:20px;border:0;background:#fff;color:#26324a;overflow-y:auto;overscroll-behavior:contain;box-shadow:-12px 0 44px #14254433}
+.app-drawer:popover-open,.team-menu:popover-open{display:flex;flex-direction:column}
+.app-drawer::backdrop,.team-menu::backdrop{background:#101b32a0}
+.app-drawer-head,.team-menu-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6ef;padding-bottom:16px;font-size:18px}
+.app-drawer-head .app-button,.team-menu-heading button{font-size:24px}
+.app-drawer form,.team-menu form{margin-top:auto;padding-top:24px}
+.app-drawer .app-link,.team-menu .team-menu-links a{display:block;width:100%;padding:10px 14px;border:1px solid #dce2ef;border-radius:10px;background:white;color:inherit;text-align:right;text-decoration:none;font:inherit}
+.app-drawer .app-drawer-links,.team-menu .team-menu-links{display:flex;flex-direction:column;gap:10px;margin:20px 0}
+.app-drawer .history{margin:0}
+@media(prefers-reduced-motion:no-preference){.app-drawer:popover-open,.team-menu:popover-open{animation:dashboard-drawer-in .26s cubic-bezier(.2,.75,.25,1)}@keyframes dashboard-drawer-in{from{transform:translateX(100%)}to{transform:translateX(0)}}}
+
 `;
-const tabs = (items: Tab[], current: string) =>`<nav class="app-tabs" aria-label="منوی اصلی داشبورد">${items.map(([href,label,glyph])=>`<a href="${href}"${href===current?' aria-current="page"':''}>${icon(glyph)}<span>${label}</span></a>`).join('')}</nav>`;
+const tabs = (items: Tab[], current: string, floating = false) =>`<nav class="app-tabs${floating ? " app-tabs-floating" : ""}" aria-label="منوی اصلی داشبورد">${items.map(([href,label,glyph])=>`<a href="${href}"${href===current?' aria-current="page"':''}>${icon(glyph)}<span>${label}</span></a>`).join('')}</nav>`;
 const back = (href: string, label: string) =>`<a class="app-button app-back" href="${href}" aria-label="${label}">${icon('back')}</a>`;
 export function clientNavigation(html: string, token: string, current: string) {
   const hero=html.match(/<header[^>]*>([\s\S]*?)<\/header>/);
@@ -36,15 +65,15 @@ export function clientNavigation(html: string, token: string, current: string) {
   const isMeeting=current==='/r/meeting';
   const archived=isMeeting?html.match(/<details class="history">[\s\S]*?<\/details>/)?.[0]:null;
   const context=isMeeting?html.match(/<p class="meeting-context" id="meeting-context">([\s\S]*?)<\/p>/):null;
-  const brand=hero[1].match(/<a\b[^>]*href="\/"[^>]*>[\s\S]*?<\/a>/)?.[0].replace('romava-logo-focus.svg','romava-symbol-focus.svg');
+  const brand=hero[1].match(/<a\b[^>]*href="\/"[^>]*>[\s\S]*?<\/a>/)?.[0].replace('/brand/romava-logo-focus.svg','/studio/assets/romava-earth-logo.svg');
   const picker=hero[1].match(/<form class="month-picker"[\s\S]*?<\/form>/)?.[0]??'';
   const title=context?.[1]??(({ '/r/preparation':'آمادگی روز آفیش','/r/plans':'طرح‌ها و قیمت‌ها','/r/meeting':'جلسه ماهانه' } as Record<string, string>)[current]??'گزارش عملکرد');
   const header=`<header class="topbar app-header"><div class="app-brand"><button class="app-button" type="button" popovertarget="client-drawer" aria-label="منوی بیشتر">${icon('menu')}</button>${brand??''}</div><p class="app-title"${isMeeting?' id="meeting-context"':''}>${title}</p>${current===home?'':back(home,'بازگشت به داشبورد')}${current===home?'<span id="accountName" hidden></span>':''}${picker}</header>`;
-  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><strong>منوی داشبورد</strong><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div>${archived??''}<a class="app-link" href="/r/plans">طرح‌ها و قیمت‌ها</a><a class="app-link" href="/">سایت روماوا</a><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
+  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><strong>منوی داشبورد</strong><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌ها و قیمت‌ها</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
   html=html.replace(hero[0],()=>header);
   if(archived)html=html.replace(archived,'');
   if(context)html=html.replace(context[0],'');
-  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>drawer+tabs([[home,'گزارش عملکرد','home'],['/r/preparation','آمادگی آفیش','prep'],['/r/meeting','جلسه ماهانه و تمدید','meet']],current)+'</body>');
+  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>drawer+tabs([[home,'گزارش عملکرد','home'],['/r/preparation','آمادگی آفیش','prep'],['/r/meeting','جلسه ماهانه و تمدید','meet']],current, true)+'</body>');
 }
 
 export function teamNavigationLayout(html: string, view: string, backToShoots: boolean) {
@@ -53,7 +82,7 @@ export function teamNavigationLayout(html: string, view: string, backToShoots: b
   const team='/team/meetings';
   const logout=html.match(/<form method="post" action="\/team\/meetings">[\s\S]*?<\/form>/)?.[0];
   if(logout)html=html.replace(logout,'').replace('</nav>\n  </div>',()=>'</nav>'+logout.replace('>خروج<','>خروج از حساب<')+'</div>');
-  html=html.replace(/(<nav class="team-nav team-menu-links"[^>]*>)[\s\S]*?<\/nav>/,(_all,open)=>open+'<a href="/team/meetings?view=qc">QC سایت</a></nav>');
+  html=html.replace(/(<nav class="team-nav team-menu-links"[^>]*>)[\s\S]*?<\/nav>/,(_all,open)=>open + `<a href="/team/meetings?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a><a href="/team/meetings?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a></nav>`);
   html=html.replace(/<header[^>]*>/,'<header class="app-header">')
     .replace(/<p><a href="\/team\/meetings\?view=shoots">← برگشت به آفیش‌ها<\/a><\/p>/,'');
   if(backToShoots)html=html.replace('</header>',()=>back(team+'?view=shoots','برگشت به آفیش‌ها')+'</header>');

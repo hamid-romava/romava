@@ -1,9 +1,9 @@
-import { plans } from "./pricing-plans";
-const planIds: Record<string, string> = { base: "seed", vangogh: "cypress", davinci: "bamboo" };
-export const meetingPlans = plans.map(plan => ({ id: planIds[plan.kind], name: plan.name, description: plan.purpose, priceToman: Number(plan.price.replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))) * 1000000 }));
+import { pricedPlans, defaultPricing, type PricingSettings } from "./pricing-plans";
+
+export const meetingPlans = pricedPlans();
 
 export function renewalPrice(plan: typeof meetingPlans[number], months: 1 | 3) {
-  const discount = months === 3 ? ({ cypress: 5, bamboo: 10 } as Record<string, number>)[plan.id] ?? 0 : 0;
+  const discount = months === 3 ? plan.discount : 0;
   return Math.round(plan.priceToman * months * (100 - discount) / 100);
 }
 
@@ -14,15 +14,16 @@ export function tehranToday(now = new Date()) {
 }
 export function addDays(day: string, days: number) { const date = new Date(day + "T12:00:00Z"); date.setUTCDate(date.getUTCDate() + days); return date.toISOString().slice(0, 10); }
 export function validDate(day: unknown): day is string { return typeof day === "string" && /^20\d{2}-\d{2}-\d{2}$/.test(day) && !Number.isNaN(Date.parse(day + "T12:00:00Z")) && new Date(day + "T12:00:00Z").toISOString().slice(0, 10) === day; }
-export function validateBooking(input: unknown, today = tehranToday()): MeetingBooking | null {
+export function validateBooking(input: unknown, today = tehranToday(), pricing: PricingSettings = defaultPricing): MeetingBooking | null {
   if (!input || typeof input !== "object") return null;
   const b = input as Record<string, unknown>;
-  if (!meetingPlans.some(plan => plan.id === b.plan) || !validDate(b.shootDate) || b.shootDate < addDays(today, 3) || b.shootDate > addDays(today, 7) || !["morning", "afternoon"].includes(String(b.shootSlot)) || !["full", "split"].includes(String(b.paymentModel)) || !validDate(b.firstPaymentDate) || b.firstPaymentDate < today || b.firstPaymentDate > addDays(b.shootDate, -2)) return null;
+  const plan = pricedPlans(pricing).find(plan => plan.id === b.plan);
+  if (!plan || !validDate(b.shootDate) || b.shootDate < addDays(today, 3) || b.shootDate > addDays(today, 7) || !["morning", "afternoon"].includes(String(b.shootSlot)) || !["full", "split"].includes(String(b.paymentModel)) || !validDate(b.firstPaymentDate) || b.firstPaymentDate < today || b.firstPaymentDate > addDays(b.shootDate, -2)) return null;
   if (b.paymentModel === "split" && (!validDate(b.secondPaymentDate) || b.secondPaymentDate <= b.firstPaymentDate || b.secondPaymentDate > addDays(b.firstPaymentDate, 14))) return null;
   const renewalMonths = b.renewalMonths ?? 1;
   if (renewalMonths !== 1 && renewalMonths !== 3) return null;
-  const totalPrice = renewalPrice(meetingPlans.find(plan => plan.id === b.plan)!, renewalMonths);
-  return { renewalMonths, totalPrice, firstPaymentAmount: b.paymentModel === "split" ? totalPrice / 2 : totalPrice, secondPaymentAmount: b.paymentModel === "split" ? totalPrice / 2 : null, plan: String(b.plan), shootDate: b.shootDate, shootSlot: b.shootSlot as MeetingBooking["shootSlot"], paymentModel: b.paymentModel as MeetingBooking["paymentModel"], firstPaymentDate: b.firstPaymentDate, secondPaymentDate: b.paymentModel === "split" ? String(b.secondPaymentDate) : null };
+  const totalPrice = renewalPrice(plan, renewalMonths);
+  return { renewalMonths, totalPrice, firstPaymentAmount: b.paymentModel === "split" ? Math.ceil(totalPrice / 2) : totalPrice, secondPaymentAmount: b.paymentModel === "split" ? Math.floor(totalPrice / 2) : null, plan: String(b.plan), shootDate: b.shootDate, shootSlot: b.shootSlot as MeetingBooking["shootSlot"], paymentModel: b.paymentModel as MeetingBooking["paymentModel"], firstPaymentDate: b.firstPaymentDate, secondPaymentDate: b.paymentModel === "split" ? String(b.secondPaymentDate) : null };
 }
 export function bookingLines(b: MeetingBooking) {
   const date = (value: string) => new Intl.DateTimeFormat("fa-IR", { dateStyle: "long", timeZone: "Asia/Tehran" }).format(new Date(value + "T12:00:00Z"));

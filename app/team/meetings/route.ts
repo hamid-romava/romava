@@ -1,3 +1,5 @@
+import { getPricing, pricingFromForm, savePricing } from "../../../lib/pricing-store";
+import { pricedPlans } from "../../../lib/pricing-plans";
 import { teamNavigationLayout } from "../../../lib/dashboard-navigation";
 import type { MongoClient } from "mongodb";
 import { bookingLines } from "@/lib/meeting-booking";
@@ -14,13 +16,7 @@ function page(body: string, view = "", backToShoots = false) { return teamNaviga
 .team-menu-toggle,.team-menu-heading button{display:grid;place-content:center;width:44px;height:44px;padding:0;background:#fff;color:#26324a;border:1px solid #dce2ef;border-radius:10px}
 .team-menu-toggle{gap:4px}
 .team-menu-toggle span{width:18px;height:2px;border-radius:2px;background:currentColor}
-.team-menu{position:fixed;top:0;right:0;bottom:auto;left:auto;width:min(360px,88vw);height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) 20px;overflow-y:auto;overscroll-behavior:contain;border:0;background:#fff;color:#26324a;box-shadow:-12px 0 44px #14254433}
-.team-menu::backdrop{background:#101b32a0}
-.team-menu-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6ef;padding-bottom:16px;font-size:18px}
-.team-menu-heading button{font-size:24px}
-.team-nav.team-menu-links{flex-direction:column}
-.team-menu-links a{padding:10px 14px}
-@media(prefers-reduced-motion:no-preference){.team-menu:popover-open{animation:team-menu-in .26s cubic-bezier(.2,.75,.25,1)}@keyframes team-menu-in{from{transform:translateX(100%)}to{transform:translateX(0)}}}
+
 
 .shoot-progress{margin:20px 0}.shoot-progress-label{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.shoot-progress-label span{color:#58677e}
 .shoot-progress progress{display:block;width:100%;height:8px;margin-top:8px;accent-color:#2855f5}
@@ -30,17 +26,17 @@ function page(body: string, view = "", backToShoots = false) { return teamNaviga
 .card textarea{display:block;width:100%;font:inherit;color:inherit;border:1px solid #dce2ef;border-radius:10px;padding:12px;margin:8px 0 18px;resize:vertical}</style></head><body><div class="page">${body}</div></body></html>`, view, backToShoots); }
 function login(request: Request, error = "") {
   const nonce = loginNonce();
-  return new Response(page(`<header><img src="/brand/romava-logo-focus.svg" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
+  return new Response(page(`<header><img src="/studio/assets/romava-earth-logo.svg" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
 }
 const analyticsTestCookie = "romava_ga_test";
 
-function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots") {
+function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing") {
   return `<header>
     <div class="team-brand">
       <button type="button" class="team-menu-toggle" popovertarget="team-menu" aria-label="منوی پنل تیم">
         <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
       </button>
-      <img src="/brand/romava-logo-focus.svg" alt="روماوا">
+      <img src="/studio/assets/romava-earth-logo.svg" alt="روماوا">
     </div>
     <form method="post" action="/team/meetings">
       <input type="hidden" name="action" value="logout">
@@ -57,10 +53,32 @@ function teamNavigation(request: Request, active: "meetings" | "requests" | "ana
     <a href="/team/meetings"${active === "meetings" ? ' aria-current="page"' : ""}>پاسخ جلسات</a>
     <a href="/team/meetings?view=requests"${active === "requests" ? ' aria-current="page"' : ""}>درخواست‌های سایت</a>
     <a href="/team/meetings?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
+    <a href="/team/meetings?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a>
     <a href="/team/meetings?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a>
     <a href="/team/meetings?view=shoots"${active === "shoots" ? ' aria-current="page"' : ""}>چک‌لیست آفیش</a>
     </nav>
   </div>`;
+}
+
+async function teamPricing(request: Request, status = 200, message = "") {
+  const navigation = teamNavigation(request, "pricing");
+  try {
+    const plans = pricedPlans(await getPricing());
+    const csrf = hash(readCookie(request, "romava_team_session") + ":pricing");
+    const fields = plans.map(plan => `<fieldset class="card"><legend>طرح ${plan.name}</legend>
+      <label>قیمت ماهانه (تومان)<input name="${plan.id}-price" type="text" dir="ltr" inputmode="numeric" maxlength="13" required value="${plan.priceToman}"></label>
+      <label>تخفیف تمدید سه‌ماهه (درصد)<input name="${plan.id}-discount" type="text" dir="ltr" inputmode="numeric" maxlength="3" required value="${plan.discount}"></label>
+    </fieldset>`).join("");
+    return new Response(page(`${navigation}<main><h1>قیمت طرح‌ها</h1>
+      <p>قیمت‌ها رو به تومان و تخفیف‌ها رو به درصد بنویس. این عددها توی صفحهٔ طرح‌ها و فرم تمدید نمایش داده می‌شن.</p>
+      ${message ? `<p class="notice" role="${status >= 400 ? "alert" : "status"}">${escape(message)}</p>` : ""}
+      <form method="post" action="/team/meetings?view=pricing">
+        <input type="hidden" name="action" value="save-pricing"><input type="hidden" name="csrf" value="${csrf}">
+        ${fields}<button type="submit">ذخیرهٔ قیمت‌ها</button>
+      </form></main>`, "pricing"), { status, headers });
+  } catch {
+    return new Response(page(navigation + '<p class="notice" role="alert">تنظیمات قیمت فعلاً در دسترس نیست. دوباره تلاش کن.</p>', "pricing"), { status: 503, headers });
+  }
 }
 
 function websiteQc(request: Request) {
@@ -172,6 +190,9 @@ export async function GET(request: Request) {
       return new Response(page(navigation + '<p class="notice" role="alert">دسترسی به چک‌لیست آفیش فعلاً ممکن نیست. دوباره تلاش کن.</p>'), { status: 503, headers });
     }
   }
+  if (url.searchParams.get("view") === "pricing") {
+    return teamPricing(request, 200, url.searchParams.has("saved") ? "قیمت‌ها ذخیره شدن." : "");
+  }
   if (url.searchParams.get("view") === "qc") return websiteQc(request);
   if (url.searchParams.get("view") === "analytics") return websiteAnalytics(request, url);
   if (url.searchParams.get("view") === "requests") return websiteRequests(request, url);
@@ -195,6 +216,18 @@ export async function POST(request: Request) {
       return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">اطلاعات فرم رو چک کن.</p><a href="/team/meetings?view=shoots">برگشت به آفیش‌ها</a>'), { status: 400, headers });
     } catch {
       return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">ذخیره انجام نشد. به فرم برگرد و دوباره تلاش کن.</p>'), { status: 503, headers });
+    }
+  }
+  if (action === "save-pricing") {
+    const csrf = hash(readCookie(request, "romava_team_session") + ":pricing");
+    if (!teamAuthenticated(request) || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
+    const pricing = pricingFromForm(form);
+    if (!pricing) return teamPricing(request, 400, "قیمت‌ها باید عدد مثبت به تومان باشن و درصد تخفیف بین ۰ تا ۱۰۰ باشه.");
+    try {
+      await savePricing(pricing);
+      return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings?view=pricing&saved=1" } });
+    } catch {
+      return teamPricing(request, 503, "ذخیرهٔ قیمت‌ها انجام نشد. دوباره تلاش کن.");
     }
   }
   if (action === "analytics-test") {

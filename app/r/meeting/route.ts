@@ -1,3 +1,4 @@
+import { getPricing } from "../../../lib/pricing-store";
 import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { reportMeetingMonth } from "@/lib/meeting-booking";
 import { currentCycle } from "@/lib/meeting-store";
@@ -12,7 +13,9 @@ export async function GET(request: Request) {
   try { report = Object.values(reports()).find(item => authenticated(request, item)); }
   catch { return new Response("Reports unavailable", { status: 503, headers: htmlHeaders }); }
   if (!report) return new Response(null, { status: 303, headers: { ...htmlHeaders, Location: "/admin" } });
-  return new Response(clientNavigation(meetingTemplate(report.token, hash(`meeting-v1:${report.token}`), currentCycle(), meetingCsrf(request), reportMeetingMonth(report)), report.token, "/r/meeting"), {
-    headers: { ...htmlHeaders, "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" },
+  const pricing = await getPricing().catch(() => null);
+  if (!pricing) return new Response("Pricing unavailable", { status: 503, headers: htmlHeaders });
+  return new Response(clientNavigation(meetingTemplate(report.token, hash(`meeting-v1:${report.token}`), currentCycle(), meetingCsrf(request), reportMeetingMonth(report), pricing), report.token, "/r/meeting"), {
+    headers: { ...htmlHeaders, "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; connect-src 'self'; frame-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" },
   });
 }
