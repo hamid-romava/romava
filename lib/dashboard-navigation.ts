@@ -88,7 +88,7 @@ export function clientNavigation(html: string, token: string, current: string) {
   html=html.replace(hero[0],()=>header);
   if(archived)html=html.replace(archived,'');
   if(context)html=html.replace(context[0],'');
-  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>drawer+tabs([[home,'گزارش عملکرد','home'],[monthly,'گزارش ماهانه','chart'],['/r/preparation','آمادگی آفیش','prep'],['/r/meeting','جلسه ماهانه و تمدید','meet']],current, true)+'</body>');
+  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>drawer+tabs([[monthly,'گزارش ماهانه','chart'],[home,'گزارش عملکرد','home'],['/r/preparation','آمادگی آفیش','prep'],['/r/meeting','جلسه ماهانه و تمدید','meet']],current, true)+'</body>');
 }
 
 export function teamNavigationLayout(html: string, view: string, backToShoots: boolean) {

@@ -1,3 +1,4 @@
+import { reportSheet } from "../../../lib/report-sheet";
 import { reportOverview } from "../../../lib/report-trends";
 import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { reportTemplate } from "@/lib/report-template";
@@ -24,6 +25,7 @@ export async function GET(request: Request, { params }: Context) {
   if (!authenticated(request, report)) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: "/admin" } });
   const months = Object.keys(report.months || {}).filter(key => /^[1-9]\d*$/.test(key)).sort((a, b) => Number(a) - Number(b));
   const query = new URL(request.url).searchParams;
+  const embedded = query.get("sheet") === "1";
   const requested = query.get("month");
   const selected = requested ?? months.at(-1);
   if (requested !== null && !months.includes(requested)) return new Response("Month not found", { status: 404, headers: reportHeaders });
@@ -37,6 +39,14 @@ export async function GET(request: Request, { params }: Context) {
     label: labels[month] ?? `ماه ${new Intl.NumberFormat("fa-IR").format(Number(month))}`,
     stats: report.months![month],
   }));
+  if (embedded) {
+    const html = requested === null && months.length
+      ? reportOverview(monthHistory, query.get("view") === "monthly")
+      : reportTemplate.replace("__REPORT_DATA__", () => data).replace("__MONTH_PICKER__", "");
+    return new Response(reportSheet(html), {
+      headers: { ...htmlHeaders, "X-Frame-Options": "SAMEORIGIN", "Content-Security-Policy": "frame-ancestors 'self'" },
+    });
+  }
   if (requested === null && months.length) {
     const chooseMonth = query.get("view") === "monthly";
     return new Response(clientNavigation(reportOverview(monthHistory, chooseMonth), token, chooseMonth ? path + "?view=monthly" : path), { headers: htmlHeaders });
