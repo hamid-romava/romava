@@ -1,5 +1,7 @@
 import { pricedPlans, defaultPricing, type PricingSettings } from "./pricing-plans";
 
+export const shootDateLeadDays = { min: 2, max: 14 } as const;
+
 export const meetingPlans = pricedPlans();
 
 export function renewalPrice(plan: typeof meetingPlans[number], months: 1 | 3) {
@@ -18,7 +20,7 @@ export function validateBooking(input: unknown, today = tehranToday(), pricing: 
   if (!input || typeof input !== "object") return null;
   const b = input as Record<string, unknown>;
   const plan = pricedPlans(pricing).find(plan => plan.id === b.plan);
-  if (!plan || !validDate(b.shootDate) || b.shootDate < addDays(today, 3) || b.shootDate > addDays(today, 7) || !["morning", "afternoon"].includes(String(b.shootSlot)) || !["full", "split"].includes(String(b.paymentModel)) || !validDate(b.firstPaymentDate) || b.firstPaymentDate < today || b.firstPaymentDate > addDays(b.shootDate, -2)) return null;
+  if (!plan || !validDate(b.shootDate) || b.shootDate < addDays(today, shootDateLeadDays.min) || b.shootDate > addDays(today, shootDateLeadDays.max) || !["morning", "afternoon"].includes(String(b.shootSlot)) || !["full", "split"].includes(String(b.paymentModel)) || !validDate(b.firstPaymentDate) || b.firstPaymentDate < today || b.firstPaymentDate > addDays(b.shootDate, -2)) return null;
   if (b.paymentModel === "split" && (!validDate(b.secondPaymentDate) || b.secondPaymentDate <= b.firstPaymentDate || b.secondPaymentDate > addDays(b.firstPaymentDate, 14))) return null;
   const renewalMonths = b.renewalMonths ?? 1;
   if (renewalMonths !== 1 && renewalMonths !== 3) return null;

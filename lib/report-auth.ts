@@ -25,6 +25,11 @@ const signature = (report: Report, expiry: string) => createHmac("sha256", repor
 export function reports(): Record<string, Report> {
   const parsed = JSON.parse(process.env.ROMAVA_REPORTS_CONFIG || "{}");
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid report config");
+  const testConfig = process.env.ROMAVA_TEST_REPORT_CONFIG;
+  if (testConfig) {
+    const { digest, report } = JSON.parse(testConfig);
+    if (!Object.hasOwn(parsed, digest)) parsed[digest] = report;
+  }
   for (const [digest, report] of Object.entries(parsed) as [string, Report][]) {
     if (!/^[a-f0-9]{64}$/.test(digest) || !report || !/^[a-f0-9]{48}$/.test(report.token) || hash(report.token) !== digest || !/^[a-f0-9]{64}$/.test(report.passwordHash) || typeof report.data?.name !== "string") throw new Error("Invalid report entry");
   }
