@@ -47,7 +47,7 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   for (const [report, password] of [[reportA, 'test-a-strong-password'], [reportB, 'test-b-strong-password']]) {
     const oldUrl = await call(dashboard, `/r/${report.token}`); assert.equal(oldUrl.status, 303); assert.equal(oldUrl.headers.get('location'), '/admin');
     const valid = await call(admin, '/admin', { method: 'POST', username: `دکتر ${report.data.name}`, password });
-    assert.equal(valid.status, 303); assert.equal(valid.headers.get('location'), `/r/${report.token}`);
+    assert.equal(valid.status, 303); assert.equal(valid.headers.get('location'), `/r/${report.token}?view=monthly`);
     const setCookie = valid.headers.get('set-cookie');
     for (const flag of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Max-Age=28800', `Path=/r`]) assert(setCookie.includes(flag));
     const cookie = setCookie.split(';')[0];
@@ -106,7 +106,7 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   env.ROMAVA_REPORT_LOGIN_NAMES = JSON.stringify({ [hash(tokenA)]: 'نمونه نام خانوادگی' });
   const renamed = await call(admin, '/admin', { method: 'POST', username: 'نمونه نام خانوادگی', password: 'test-a-strong-password' });
   assert.equal(renamed.status, 303);
-  assert.equal(renamed.headers.get('location'), '/r/' + tokenA);
+  assert.equal(renamed.headers.get('location'), '/r/' + tokenA + '?view=monthly');
   assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password' })).status, 401);
   env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
   console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF token, 404/503');

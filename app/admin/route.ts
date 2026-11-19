@@ -30,5 +30,5 @@ export async function POST(request: Request) {
   const passwordHash = hash(password);
   const report = allReports.find(item => normalize(name) === username(item) && equal(passwordHash, item.passwordHash));
   if (!report) return new Response(loginTemplate(storedCsrf, true), { status: 401, headers: htmlHeaders });
-  return new Response(null, { status: 303, headers: { ...reportHeaders, Location: `/r/${report.token}`, "Set-Cookie": createSession(request, report) } });
+  return new Response(null, { status: 303, headers: { ...reportHeaders, Location: `/r/${report.token}?view=monthly`, "Set-Cookie": createSession(request, report) } });
 }

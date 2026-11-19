@@ -47,12 +47,18 @@ export async function GET(request: Request, { params }: Context) {
       headers: { ...htmlHeaders, "X-Frame-Options": "SAMEORIGIN", "Content-Security-Policy": "frame-ancestors 'self'" },
     });
   }
+  const dashboard = (html: string, current: string) => {
+    const page = clientNavigation(html, token, current);
+    return new Response(query.get("feedback") === "sent"
+      ? page.replace(/<main(?:\s[^>]*)?>/, main => main + '<p role="status" style="margin:0 0 16px;padding:10px 14px;border-radius:12px;background:#e8f6ee;color:#087452">پیامت ثبت شد.</p>')
+      : page, { headers: htmlHeaders });
+  };
   if (requested === null && months.length) {
     const chooseMonth = query.get("view") === "monthly";
-    return new Response(clientNavigation(reportOverview(monthHistory, chooseMonth), token, chooseMonth ? path + "?view=monthly" : path), { headers: htmlHeaders });
+    return dashboard(reportOverview(monthHistory, chooseMonth), chooseMonth ? path + "?view=monthly" : path);
   }
   const html = reportTemplate.replace("__REPORT_DATA__", () => data).replace("__MONTH_PICKER__", () => monthPicker);
-  return new Response(clientNavigation(html, token, requested === null ? path : path + "?view=monthly"), { headers: htmlHeaders });
+  return dashboard(html, requested !== null || query.get("view") === "monthly" ? path + "?view=monthly" : path);
 }
 
 export async function POST(request: Request, { params }: Context) {
