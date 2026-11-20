@@ -1,0 +1,7 @@
+.image-sheet { position:fixed; inset:auto 0 0; margin:0 auto; width:min(100%,1080px); max-width:100vw; height:min(92svh,1000px); max-height:92svh; padding:0 20px max(20px,env(safe-area-inset-bottom)); border:1px solid #c3b09455; border-bottom:0; border-radius:24px 24px 0 0; background:#f6f0e6; color:#0f1433; overflow:hidden; transform:translateY(102%); opacity:0; transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .25s; }
+.image-sheet::backdrop { background:#0f1433a6; backdrop-filter:blur(5px); }
+.image-sheet.is-open { transform:translateY(0); opacity:1; }
+.image-sheet-header { height:62px; display:flex; align-items:center; justify-content:space-between; font-size:14px; }
+.image-sheet-close { display:grid; place-items:center; width:40px; height:40px; padding:0; border:1px solid #31382733; border-radius:50%; background:transparent; color:#313827; font-family:inherit; font-size:30px; line-height:1; cursor:pointer; }
+.image-sheet-picture { display:block; width:100%; height:calc(100% - 62px); object-fit:contain; }
+@media(prefers-reduced-motion:reduce) { .image-sheet { transition:none; } }
