@@ -1,0 +1,82 @@
+.theatre-intro[hidden] { display: none; }
+.theatre-intro {
+  position: relative;
+  height: 450svh;
+  background: #11182a;
+}
+.intro-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+.intro-canvas { position: absolute; inset: 0; }
+.intro-canvas canvas { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity .7s ease; }
+.intro-canvas.is-ready canvas { opacity: 1; }
+.intro-skip {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  padding: 8px 16px;
+  color: #f6f0e6;
+  background: #0f1433b8;
+  border: 1px solid #c3b09488;
+  border-radius: 4px;
+  font-size: 13px;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+}
+.intro-direction {
+  position: absolute;
+  bottom: 32px;
+  right: 28px;
+  font-size: 13px;
+  color: #eadcc6;
+  pointer-events: none;
+}
+.intro-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #ffffff18; }
+.intro-progress span { display: block; width: 100%; height: 100%; background: #c3b094; transform: scaleX(0); transform-origin: right; }
+.intro-replay { background: transparent; color: var(--muted); border: 1px solid var(--line); font-size: 12px; padding: 8px 12px; }
+@media(max-width:640px) { .theatre-intro { height: 470svh; } }
+@media(prefers-reduced-motion:reduce) { .theatre-intro { display: none; } }
+.intro-final-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  pointer-events: none;
+}
+.entry-landing-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  overflow: hidden;
+  pointer-events: none;
+  background: #11182a;
+}
+.entry-landing-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.entry-landing-frame {
+  inset: auto;
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  width: 100vw;
+  height: 100svh;
+}
+
+.intro-aperture { position:absolute; inset:0; pointer-events:none; z-index:1; will-change:opacity; }
+.intro-aperture svg { display:block; width:100%; height:100%; }
+
+.intro-foreground { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.intro-foreground img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; will-change:transform,opacity; }
+.near-left { clip-path:inset(0 68% 0 0); transform-origin:left center; }
+.near-right { clip-path:inset(0 0 0 68%); transform-origin:right center; }
+.near-arch { clip-path:inset(0 28% 74% 28%); transform-origin:center top; }
+
+.intro-direction, .intro-progress { z-index:2; }
