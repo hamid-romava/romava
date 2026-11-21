@@ -48,7 +48,7 @@ const applicableRecordingItems = (shoot: Shoot, row: Recording) => recordingItem
 const firstIncompleteRecording = (shoot: Shoot) => shoot.recordings.find(row => !allChecked(applicableRecordingItems(shoot, row), row.checked));
 const canLeave = (shoot: Shoot) => arrivalComplete(shoot) && shoot.recordings.length > 0 && !firstIncompleteRecording(shoot);
 
-const path = "/team/meetings?view=shoots";
+const path = "/blackhorse?view=shoots";
 const validId = (id: unknown): id is string => typeof id === "string" && /^[a-f0-9]{24}$/.test(id);
 const validTime = (time: string) => time === "" || /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
 const format = new Intl.NumberFormat("fa-IR");
@@ -77,7 +77,7 @@ function identity(shoot: Shoot, escape: Render["escape"]) {
 
 export async function renderShootChecklists(url: URL, { escape, csrf, newId }: Render) {
   const collection = await shoots();
-  const form = (action: string, body: string) => `<form method="post" action="/team/meetings">${hidden("action", action)}${hidden("csrf", csrf)}${body}</form>`;
+  const form = (action: string, body: string) => `<form method="post" action="/blackhorse">${hidden("action", action)}${hidden("csrf", csrf)}${body}</form>`;
   const shootId = url.searchParams.get("shoot");
   if (url.searchParams.has("new")) return `<p><a href="${path}">← برگشت به آفیش‌ها</a></p><h1>آفیش جدید</h1><section class="card">${form("shoot-create", `
     ${hidden("shoot", newId)}

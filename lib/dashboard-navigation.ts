@@ -94,13 +94,13 @@ export function clientNavigation(html: string, token: string, current: string) {
 
 export function teamNavigationLayout(html: string, view: string, backToShoots: boolean) {
   if (!html.includes('id="team-menu"')) return html;
-  const active = html.match(/href="\/team\/meetings\?view=([a-z]+)" aria-current="page"/)?.[1] ?? view;
-  const team='/team/meetings';
-  const logout=html.match(/<form method="post" action="\/team\/meetings">[\s\S]*?<\/form>/)?.[0];
+  const active = html.match(/href="\/blackhorse\?view=([a-z]+)" aria-current="page"/)?.[1] ?? view;
+  const team='/blackhorse';
+  const logout=html.match(/<form method="post" action="\/blackhorse">[\s\S]*?<\/form>/)?.[0];
   if(logout)html=html.replace(logout,'').replace('</nav>\n  </div>',()=>'</nav>'+logout.replace('>خروج<','>خروج از حساب<')+'</div>');
-  html=html.replace(/(<nav class="team-nav team-menu-links"[^>]*>)[\s\S]*?<\/nav>/,(_all,open)=>open + `<a href="/team/meetings?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a><a href="/team/meetings?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a></nav>`);
+  html=html.replace(/(<nav class="team-nav team-menu-links"[^>]*>)[\s\S]*?<\/nav>/,(_all,open)=>open + `<a href="/blackhorse?view=feedback"${active === "feedback" ? ' aria-current="page"' : ""}>بازخورد مشتری‌ها</a><a href="/blackhorse?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a><a href="/blackhorse?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a></nav>`);
   html=html.replace(/<header[^>]*>/,'<header class="app-header">')
-    .replace(/<p><a href="\/team\/meetings\?view=shoots">← برگشت به آفیش‌ها<\/a><\/p>/,'');
+    .replace(/<p><a href="\/blackhorse\?view=shoots">← برگشت به آفیش‌ها<\/a><\/p>/,'');
   if(backToShoots)html=html.replace('</header>',()=>back(team+'?view=shoots','برگشت به آفیش‌ها')+'</header>');
   return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>tabs([[team,'پاسخ جلسات','meet'],[team+'?view=requests','درخواست‌ها','inbox'],[team+'?view=analytics','آمار سایت','chart'],[team+'?view=shoots','چک‌لیست آفیش','shoot']],active?team+'?view='+active:team)+'</body>');
 }

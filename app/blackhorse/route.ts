@@ -1,6 +1,7 @@
-import { getPricing, pricingFromForm, savePricing } from "../../../lib/pricing-store";
-import { pricedPlans } from "../../../lib/pricing-plans";
-import { dashboardLogo, teamNavigationLayout } from "../../../lib/dashboard-navigation";
+import { feedbackKinds, isFeedbackKind } from "../../lib/feedback-types";
+import { getPricing, pricingFromForm, savePricing } from "../../lib/pricing-store";
+import { pricedPlans } from "../../lib/pricing-plans";
+import { dashboardLogo, teamNavigationLayout } from "../../lib/dashboard-navigation";
 import type { MongoClient } from "mongodb";
 import { bookingLines } from "@/lib/meeting-booking";
 import { hash, equal, htmlHeaders } from "@/lib/report-auth";
@@ -26,18 +27,18 @@ function page(body: string, view = "", backToShoots = false) { return teamNaviga
 .card textarea{display:block;width:100%;font:inherit;color:inherit;border:1px solid #dce2ef;border-radius:10px;padding:12px;margin:8px 0 18px;resize:vertical}</style></head><body><div class="page">${body}</div></body></html>`, view, backToShoots); }
 function login(request: Request, error = "") {
   const nonce = loginNonce();
-  return new Response(page(`<header><img src="${dashboardLogo}" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/team; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
+  return new Response(page(`<header><img src="${dashboardLogo}" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/blackhorse; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
 }
 const analyticsTestCookie = "romava_ga_test";
 
-function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing") {
+function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing" | "feedback") {
   return `<header>
     <div class="team-brand">
       <button type="button" class="team-menu-toggle" popovertarget="team-menu" aria-label="منوی پنل تیم">
         <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
       </button>
     </div>
-    <form method="post" action="/team/meetings">
+    <form method="post" action="/blackhorse">
       <input type="hidden" name="action" value="logout">
       <input type="hidden" name="csrf" value="${hash(readCookie(request, "romava_team_session") + ":logout")}">
       <button class="logout">خروج</button>
@@ -49,12 +50,12 @@ function teamNavigation(request: Request, active: "meetings" | "requests" | "ana
       <button type="button" popovertarget="team-menu" popovertargetaction="hide" aria-label="بستن منو">×</button>
     </div>
     <nav class="team-nav team-menu-links" aria-label="بخش‌های پنل تیم">
-    <a href="/team/meetings"${active === "meetings" ? ' aria-current="page"' : ""}>پاسخ جلسات</a>
-    <a href="/team/meetings?view=requests"${active === "requests" ? ' aria-current="page"' : ""}>درخواست‌های سایت</a>
-    <a href="/team/meetings?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
-    <a href="/team/meetings?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a>
-    <a href="/team/meetings?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a>
-    <a href="/team/meetings?view=shoots"${active === "shoots" ? ' aria-current="page"' : ""}>چک‌لیست آفیش</a>
+    <a href="/blackhorse"${active === "meetings" ? ' aria-current="page"' : ""}>پاسخ جلسات</a>
+    <a href="/blackhorse?view=requests"${active === "requests" ? ' aria-current="page"' : ""}>درخواست‌های سایت</a>
+    <a href="/blackhorse?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
+    <a href="/blackhorse?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a>
+    <a href="/blackhorse?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a>
+    <a href="/blackhorse?view=shoots"${active === "shoots" ? ' aria-current="page"' : ""}>چک‌لیست آفیش</a>
     </nav>
   </div>`;
 }
@@ -71,7 +72,7 @@ async function teamPricing(request: Request, status = 200, message = "") {
     return new Response(page(`${navigation}<main><h1>قیمت طرح‌ها</h1>
       <p>قیمت‌ها رو به تومان و تخفیف‌ها رو به درصد بنویس. این عددها توی صفحهٔ طرح‌ها و فرم تمدید نمایش داده می‌شن.</p>
       ${message ? `<p class="notice" role="${status >= 400 ? "alert" : "status"}">${escape(message)}</p>` : ""}
-      <form method="post" action="/team/meetings?view=pricing">
+      <form method="post" action="/blackhorse?view=pricing">
         <input type="hidden" name="action" value="save-pricing"><input type="hidden" name="csrf" value="${csrf}">
         ${fields}<button type="submit">ذخیرهٔ قیمت‌ها</button>
       </form></main>`, "pricing"), { status, headers });
@@ -88,7 +89,7 @@ function websiteQc(request: Request) {
       <h2>حالت تست گوگل</h2>
       <p role="status">${testMode ? "حالت تست گوگل روی همین مرورگر فعاله." : "حالت تست گوگل روی همین مرورگر خاموشه."}</p>
       <p>برای اینکه بازدیدها و تست فرم وارد آمار گوگل نشن، قبل از باز کردن سایت حالت تست رو روشن کن.</p>
-  <form class="team-nav" method="post" action="/team/meetings">
+  <form class="team-nav" method="post" action="/blackhorse">
     <input type="hidden" name="action" value="analytics-test">
     <input type="hidden" name="csrf" value="${testModeCsrf}">
     <input type="hidden" name="enabled" value="${testMode ? "0" : "1"}">
@@ -134,6 +135,32 @@ async function websiteRequests(request: Request, url: URL) {
     return new Response(page(`${navigation}<h1>درخواست‌های سایت</h1><p>درخواست‌های ثبت‌شده از جدیدترین به قدیمی‌ترین.</p>${cards || '<p class="card">درخواستی توی این صفحه نیست.</p>'}${paging}`), { headers });
   } catch {
     return new Response(page(`${navigation}<h1>درخواست‌های سایت</h1><p class="notice" role="alert">دریافت درخواست‌ها فعلاً ممکن نیست. دوباره تلاش کن.</p>`), { status: 503, headers });
+  }
+}
+
+async function customerFeedback(request: Request, url: URL) {
+  const title = "بازخورد مشتری‌ها";
+  const navigation = teamNavigation(request, "feedback");
+  const heading = navigation.replace("</header>", () => `<h1>${title}</h1></header>`);
+  const pageSize = 30;
+  const requested = Number(url.searchParams.get("page"));
+  const current = Number.isSafeInteger(requested) && requested > 0 && requested <= Math.floor(Number.MAX_SAFE_INTEGER / pageSize) ? requested : 1;
+  try {
+    const { default: connection } = await import("@/lib/mongodb") as { default: Promise<MongoClient> | null };
+    if (!connection) throw new Error("Feedback storage unavailable");
+    const rows = await (await connection).db("mydb").collection("client_feedback")
+      .find({}, { projection: { clientName: 1, kind: 1, message: 1, createdAt: 1 } })
+      .sort({ createdAt: -1, _id: -1 }).skip((current - 1) * pageSize).limit(pageSize + 1).toArray();
+    const cards = rows.slice(0, pageSize).map(row => {
+      const kind = isFeedbackKind(row.kind) ? feedbackKinds[row.kind] : "بازخورد";
+      return `<article class="card"><h2>${kind} · ${escape(row.clientName) || "بدون نام"}</h2><small>${escape(contactDate(row.createdAt))}</small><div class="answer"><p>${escape(row.message) || "—"}</p></div></article>`;
+    }).join("");
+    const previous = current > 1 ? `<a href="?view=feedback&amp;page=${current - 1}">صفحه قبل</a>` : "";
+    const next = rows.length > pageSize ? `<a href="?view=feedback&amp;page=${current + 1}">صفحه بعد</a>` : "";
+    const paging = previous || next ? `<nav class="paging" aria-label="صفحه‌های بازخورد">${previous}${next}</nav>` : "";
+    return new Response(page(heading + (cards || '<p class="card">بازخوردی توی این صفحه نیست.</p>') + paging, "feedback"), { headers });
+  } catch {
+    return new Response(page(heading + '<p class="notice" role="alert">دریافت بازخوردها فعلاً ممکن نیست. دوباره تلاش کن.</p>', "feedback"), { status: 503, headers });
   }
 }
 
@@ -194,6 +221,7 @@ export async function GET(request: Request) {
   }
   if (url.searchParams.get("view") === "qc") return websiteQc(request);
   if (url.searchParams.get("view") === "analytics") return websiteAnalytics(request, url);
+  if (url.searchParams.get("view") === "feedback") return customerFeedback(request, url);
   if (url.searchParams.get("view") === "requests") return websiteRequests(request, url);
   try {
     const rows = await listMeetings();
@@ -212,7 +240,7 @@ export async function POST(request: Request) {
       const { changeShootChecklist } = await import("@/lib/shoot-checklists");
       const location = await changeShootChecklist(action, form);
       if (location) return new Response(null, { status: 303, headers: { ...headers, Location: location } });
-      return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">اطلاعات فرم رو چک کن.</p><a href="/team/meetings?view=shoots">برگشت به آفیش‌ها</a>'), { status: 400, headers });
+      return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">اطلاعات فرم رو چک کن.</p><a href="/blackhorse?view=shoots">برگشت به آفیش‌ها</a>'), { status: 400, headers });
     } catch {
       return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">ذخیره انجام نشد. به فرم برگرد و دوباره تلاش کن.</p>'), { status: 503, headers });
     }
@@ -224,7 +252,7 @@ export async function POST(request: Request) {
     if (!pricing) return teamPricing(request, 400, "قیمت‌ها باید عدد مثبت به تومان باشن و درصد تخفیف بین ۰ تا ۱۰۰ باشه.");
     try {
       await savePricing(pricing);
-      return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings?view=pricing&saved=1" } });
+      return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse?view=pricing&saved=1" } });
     } catch {
       return teamPricing(request, 503, "ذخیرهٔ قیمت‌ها انجام نشد. دوباره تلاش کن.");
     }
@@ -237,12 +265,12 @@ export async function POST(request: Request) {
     }
     const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
     const cookie = `${analyticsTestCookie}=${enabled}; Path=/; Max-Age=${enabled === "1" ? 31536000 : 0}; SameSite=Lax${secure}`;
-    return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings?view=qc", "Set-Cookie": cookie } });
+    return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse?view=qc", "Set-Cookie": cookie } });
   }
-  if (form.get("action") === "logout" && teamAuthenticated(request) && form.get("csrf") === hash(readCookie(request, "romava_team_session") + ":logout")) return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings", "Set-Cookie": teamCookie(request, true) } });
+  if (form.get("action") === "logout" && teamAuthenticated(request) && form.get("csrf") === hash(readCookie(request, "romava_team_session") + ":logout")) return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse", "Set-Cookie": teamCookie(request, true) } });
   const csrf = readCookie(request, "romava_team_csrf");
   if (!/^[a-f0-9]{48}$/.test(csrf) || form.get("csrf") !== csrf) return login(request, "فرم ورود منقضی شده. دوباره وارد شو.");
   const password = form.get("password");
   if (String(form.get("username") || "").trim().toLowerCase() !== "romava" || typeof password !== "string" || password.length > 256 || !equal(hash(password), process.env.ROMAVA_TEAM_PASSWORD_HASH!)) return login(request, "نام کاربری یا رمز عبور درست نیست.");
-  return new Response(null, { status: 303, headers: { ...headers, Location: "/team/meetings", "Set-Cookie": teamCookie(request) } });
+  return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse", "Set-Cookie": teamCookie(request) } });
 }

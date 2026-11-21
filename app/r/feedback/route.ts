@@ -1,3 +1,4 @@
+import { feedbackKinds, isFeedbackKind } from "../../../lib/feedback-types";
 import { appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { MongoClient } from "mongodb";
@@ -6,8 +7,6 @@ import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { authenticated, hash, htmlHeaders, meetingCsrf, reports, type Report } from "../../../lib/report-auth";
 
 const path = "/r/feedback";
-const labels = { criticism: "انتقاد", suggestion: "پیشنهاد", idea: "ایده" } as const;
-type Kind = keyof typeof labels;
 
 function account(request: Request) {
   return Object.values(reports()).find(report => authenticated(request, report));
@@ -25,7 +24,7 @@ function page(request: Request, report: Report, message = "", status = 200) {
   </style></head><body><div class="page"><header class="topbar"></header><main>
   <form class="feedback-form" method="post" action="${path}">
   <input type="hidden" name="csrf" value="${meetingCsrf(request)}">
-  <label>نوع پیام<select name="kind" required><option value="">انتخاب کن</option>${Object.entries(labels).map(([kind,label])=>`<option value="${kind}">${label}</option>`).join("")}</select></label>
+  <label>نوع پیام<select name="kind" required><option value="">انتخاب کن</option>${Object.entries(feedbackKinds).map(([kind,label])=>`<option value="${kind}">${label}</option>`).join("")}</select></label>
   <label>پیامت<textarea name="message" maxlength="3000" required></textarea></label>
   ${message ? `<p role="${status === 200 ? "status" : "alert"}" class="${status === 200 ? "" : "error"}">${message}</p>` : ""}
   <button type="submit">ثبت پیام</button>
@@ -52,10 +51,10 @@ export async function POST(request: Request) {
   if (form.get("csrf") !== meetingCsrf(request)) return page(request, report, "صفحه رو تازه کن و دوباره بفرست.", 403);
   const kind = form.get("kind");
   const message = form.get("message")?.trim();
-  if (!kind || !Object.hasOwn(labels, kind) || !message || message.length > 3000) return page(request, report, "نوع پیام رو انتخاب کن و متنش رو بنویس.", 400);
+  if (!isFeedbackKind(kind) || !message || message.length > 3000) return page(request, report, "نوع پیام رو انتخاب کن و متنش رو بنویس.", 400);
   try {
     const feedback = {
-      clientId: hash(report.token), clientName: report.data.name, kind: kind as Kind, message, createdAt: new Date(),
+      clientId: hash(report.token), clientName: report.data.name, kind, message, createdAt: new Date(),
     };
     const testConfig = process.env.NODE_ENV === "development" && process.env.ROMAVA_TEST_REPORT_CONFIG;
     const isLocalTest = testConfig && JSON.parse(testConfig).digest === feedback.clientId
