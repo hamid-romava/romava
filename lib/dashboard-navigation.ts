@@ -5,6 +5,7 @@ const paths = {
  prep:'M5 5h14v15H5zM8 3v4m8-4v4m-8 6 3 3 5-6',
  renewal:'M4 6h16v14H4zM8 3v5m8-5v5M4 10h16m-5 4a3.2 3.2 0 1 0 .3 3m.2-5v3h-3',
  meet:'M4 5h16v12H9l-5 4zM8 9h8m-8 4h5',
+ bell:'M18 8a6 6 0 0 0-12 0c0 6-3 7-3 9h18c0-2-3-3-3-9m-8 12a2 2 0 0 0 4 0',
  menu:'M4 6h16M4 12h16M4 18h16',
  back:'m14 5-7 7 7 7',
  chart:'M4 4v16h16M8 16v-4m4 4V8m4 8v-6',
@@ -22,6 +23,17 @@ const css=`
 .app-header>.app-title,.app-header>h1{grid-area:1/2;margin:0;text-align:center;font-size:clamp(13px,3.2vw,19px);line-height:1.55;font-weight:700;overflow-wrap:anywhere;color:#26324a}
 .app-header .month-picker{grid-area:2/1/3/-1}.app-header>.app-back{grid-area:1/3;justify-self:end}
 .app-button{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;padding:0;border:1px solid #dce3f0;border-radius:12px;color:#2847a8;background:white;font:inherit;text-decoration:none;cursor:pointer}
+.team-header-actions{grid-area:1/3;justify-self:end;display:flex;gap:6px;align-items:center}
+.team-header-actions .app-button{position:relative}
+.team-notification-count{position:absolute;top:-5px;right:-5px;min-width:20px;padding:0 4px;border-radius:12px;background:#2855f5;color:#fff;font-size:11px;line-height:20px}
+.team-notification-count[hidden]{display:none}
+.team-notifications{position:fixed;inset:70px auto auto 16px;width:min(360px,calc(100vw - 32px));max-height:70vh;margin:0;padding:16px;border:1px solid #dce3f0;border-radius:16px;background:#fff;color:#26324a;box-shadow:0 12px 35px #15243c26;overflow:auto}
+.team-notifications h2{margin:0 0 8px;font-size:17px}
+.team-notifications p{margin:0;color:#58667d}.team-notifications p:empty{display:none}
+.team-notifications ul{list-style:none;margin:0;padding:0}
+.team-notifications li+li{border-top:1px solid #e8edf5}
+.team-notifications a{display:grid;gap:3px;padding:9px 4px;color:inherit;text-decoration:none;font-size:14px}
+.team-notifications small{color:#58667d}
 .app-tabs{position:fixed;inset:auto 0 0;z-index:30;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;width:min(100%,560px);margin:auto;padding:7px 8px max(8px,env(safe-area-inset-bottom));border:1px solid #dde4f0;border-radius:18px 18px 0 0;background:white;box-shadow:0 -8px 28px #15243c12;color:#526078}
 .app-tabs a{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;min-height:52px;padding:3px;border-radius:11px;font-size:12px;line-height:1.4;text-align:center;color:inherit;text-decoration:none}.app-tabs a[aria-current]{background:#eef2ff;color:#244df0;font-weight:bold}
 
@@ -83,9 +95,9 @@ export function clientNavigation(html: string, token: string, current: string) {
   const archived=isMeeting?html.match(/<details class="history">[\s\S]*?<\/details>/)?.[0]:null;
   const context=isMeeting?html.match(/<p class="meeting-context" id="meeting-context">([\s\S]*?)<\/p>/):null;
   const picker=hero[1].match(/<form class="month-picker"[\s\S]*?<\/form>/)?.[0]??'';
-  const title=context?.[1]??(current===home+'?view=monthly'?'گزارش ماهانه':null)??(({ '/r/feedback':'انتقادات و پیشنهادات','/r/preparation':'آمادگی روز آفیش','/r/plans':'طرح‌ها و قیمت‌ها','/r/meeting':'جلسه ماهانه' } as Record<string, string>)[current]??'گزارش عملکرد');
+  const title=context?.[1]??(current===home+'?view=monthly'?'گزارش ماهانه':null)??(({ '/r/recognition':'شناخت','/r/collaboration':'اصول همکاری','/r/feedback':'انتقادات و پیشنهادات','/r/preparation':'آمادگی روز آفیش','/r/plans':'طرح‌ها و قیمت‌ها','/r/meeting':'جلسه ماهانه' } as Record<string, string>)[current]??'گزارش عملکرد');
   const header=`<header class="topbar app-header"><div class="app-brand"><button class="app-button" type="button" popovertarget="client-drawer" aria-label="منوی بیشتر">${icon('menu')}</button></div><p class="app-title"${isMeeting?' id="meeting-context"':''}>${title}</p>${current===home?'':back(home,'بازگشت به داشبورد')}${current.startsWith(home)?'<span id="accountName" hidden></span>':''}${picker}</header>`;
-  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><img class="drawer-logo" src="${dashboardLogo}" alt="روماوا"><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌ها و قیمت‌ها</a><a class="app-link" href="/r/feedback"${current==="/r/feedback"?' aria-current="page"':""}>انتقادات و پیشنهادات</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
+  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><img class="drawer-logo" src="${dashboardLogo}" alt="روماوا"><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌ها و قیمت‌ها</a><a class="app-link" href="/r/recognition"${current==="/r/recognition"?' aria-current="page"':""}>شناخت</a><a class="app-link" href="/r/collaboration"${current==="/r/collaboration"?' aria-current="page"':""}>اصول همکاری</a><a class="app-link" href="/r/feedback"${current==="/r/feedback"?' aria-current="page"':""}>انتقادات و پیشنهادات</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
   html=html.replace(hero[0],()=>header);
   if(archived)html=html.replace(archived,'');
   if(context)html=html.replace(context[0],'');
@@ -98,9 +110,16 @@ export function teamNavigationLayout(html: string, view: string, backToShoots: b
   const team='/blackhorse';
   const logout=html.match(/<form method="post" action="\/blackhorse">[\s\S]*?<\/form>/)?.[0];
   if(logout)html=html.replace(logout,'').replace('</nav>\n  </div>',()=>'</nav>'+logout.replace('>خروج<','>خروج از حساب<')+'</div>');
-  html=html.replace(/(<nav class="team-nav team-menu-links"[^>]*>)[\s\S]*?<\/nav>/,(_all,open)=>open + `<a href="/blackhorse?view=feedback"${active === "feedback" ? ' aria-current="page"' : ""}>بازخورد مشتری‌ها</a><a href="/blackhorse?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a><a href="/blackhorse?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a></nav>`);
+  const bottomTabs: Tab[] = [[team+'?view=requests','درخواست‌ها','inbox'],[team+'?view=analytics','آمار سایت','chart'],[team+'?view=shoots','چک‌لیست آفیش','shoot']];
+  html=html.replace(/(<nav class="team-nav team-menu-links"[^>]*>)([\s\S]*?)<\/nav>/,(_all,open,links: string)=>{
+    const extraLinks = links.replace(/<a href="([^"]+)"[^>]*>[^<]*<\/a>/g, (link, href) =>
+      bottomTabs.some(([url]) => url === href) ? "" : link);
+    return open + extraLinks + `<a href="/blackhorse?view=feedback"${active === "feedback" ? ' aria-current="page"' : ""}>بازخورد مشتری‌ها</a></nav>`;
+  });
   html=html.replace(/<header[^>]*>/,'<header class="app-header">')
     .replace(/<p><a href="\/blackhorse\?view=shoots">← برگشت به آفیش‌ها<\/a><\/p>/,'');
-  if(backToShoots)html=html.replace('</header>',()=>back(team+'?view=shoots','برگشت به آفیش‌ها')+'</header>');
-  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>tabs([[team,'پاسخ جلسات','meet'],[team+'?view=requests','درخواست‌ها','inbox'],[team+'?view=analytics','آمار سایت','chart'],[team+'?view=shoots','چک‌لیست آفیش','shoot']],active?team+'?view='+active:team)+'</body>');
+  const notificationButton = `<button id="team-notification-toggle" class="app-button" type="button" popovertarget="team-notifications" aria-label="نوتیفیکیشن‌ها">${icon('bell')}<span class="team-notification-count" id="team-notification-count" hidden></span></button>`;
+  html=html.replace('</header>',()=>`<div class="team-header-actions">${notificationButton}${backToShoots ? back(team+'?view=shoots','برگشت به آفیش‌ها') : ''}</div></header>`);
+  const notifications = '<section class="team-notifications" id="team-notifications" popover aria-labelledby="team-notification-title"><h2 id="team-notification-title">نوتیفیکیشن‌ها</h2><p id="team-notification-status" role="status">در حال دریافت…</p><ul id="team-notification-list"></ul></section><script src="/team-notifications.js" defer></script>';
+  return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>notifications+tabs(bottomTabs,active?team+'?view='+active:team)+'</body>');
 }

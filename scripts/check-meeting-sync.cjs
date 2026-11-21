@@ -53,6 +53,36 @@ assert.equal(feedbackResponse.status, 200);
 const feedbackHtml = await feedbackResponse.text();
 assert(feedbackHtml.includes('ایده · مشتری نمونه'));
 assert(feedbackHtml.includes('&lt;b&gt;پیام نمونه&lt;/b&gt;'));
+const notificationUrl = requestsUrl.replace('view=requests', 'view=notification-feed');
+const notificationRows = {
+  contacts: [{ _id: 1, name: 'درخواست نمونه', createdAt: new Date(1000) }],
+  meeting_answers: [{ _id: 2, doctorName: 'جلسه نمونه', updatedAt: new Date(2000) }],
+  client_feedback: [{ _id: 3, clientName: 'بازخورد نمونه', createdAt: new Date(3000) }],
+};
+const notifications = load('lib/team-notifications.ts', {
+  '@/lib/mongodb': { default: Promise.resolve({ db: () => ({
+    collection: name => ({ find: () => ({
+      sort() { return this; }, limit() { return this; },
+      async toArray() { return notificationRows[name]; },
+    }) }),
+  }) }) },
+});
+const notificationRoute = load('app/blackhorse/route.ts', {
+  '@/lib/team-auth': team, '@/lib/report-auth': auth, '@/lib/meeting-booking': booking,
+  '@/lib/meeting-store': { listMeetings: async () => [] },
+  '../../lib/team-notifications': notifications,
+});
+assert.equal((await notificationRoute.GET(new Request(notificationUrl, { headers: { cookie } }))).status, 401);
+const feed = await notificationRoute.GET(new Request(notificationUrl, { headers: { cookie: authorizedCookie } }));
+assert.equal(feed.status, 200);
+assert.match(feed.headers.get('cache-control'), /no-store/);
+assert.deepEqual((await feed.json()).items.map(item => item.view), ['feedback', 'meetings', 'requests']);
+assert.match(feedbackHtml, /id="team-notification-toggle"/);
+assert.match(feedbackHtml, /<nav class="team-nav team-menu-links"[^>]*>[\s\S]*?پاسخ جلسات[\s\S]*?<\/nav>/);
+assert.doesNotMatch(feedbackHtml.match(/<nav class="app-tabs"[\s\S]*?<\/nav>/)[0], /پاسخ جلسات/);
+const drawerLinks = feedbackHtml.match(/<nav class="team-nav team-menu-links"[^>]*>[\s\S]*?<\/nav>/)[0];
+assert.doesNotMatch(drawerLinks, /view=(requests|analytics|shoots)/);
+
 const loginPage=await teamRoute.GET(new Request('https://example.com/blackhorse'));
 const nonce=(await loginPage.text()).match(/name="csrf" value="([a-f0-9]+)"/)[1];
 const loginCookie=loginPage.headers.get('set-cookie').split(';')[0];

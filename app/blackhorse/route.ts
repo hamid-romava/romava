@@ -10,7 +10,7 @@ import { loginNonce, readCookie, teamAuthenticated, teamConfigured, teamCookie }
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
-const headers = { ...htmlHeaders, "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" };
+const headers = { ...htmlHeaders, "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" };
 const labels: Record<string, string> = { liked: "چی به دلش نشست؟", improve: "کجا جای بهترشدن داره؟", results: "خبرهای پشت پیج", "next-month": "رویدادها و اتفاق‌های پیش رو", ideas: "ایده‌های پیشنهادی" };
 function page(body: string, view = "", backToShoots = false) { return teamNavigationLayout( `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پنل تیم روماوا</title><style>@font-face{font-family:Yekan;src:url('/fonts/YekanBakh-Regular.ttf')}*{box-sizing:border-box}body{font:14px/2 Yekan,sans-serif;background:#f7f8fa;color:#26324a;margin:0}.page{max-width:900px;margin:auto;padding:28px 20px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e6f0;padding-bottom:20px}header img{width:100px}h1{font-size:26px;margin:30px 0 8px}p{color:#788397}button,input{font:inherit}button{cursor:pointer;background:#2855f5;color:white;border:0;border-radius:10px;padding:10px 20px}input{display:block;width:100%;border:1px solid #dce2ef;padding:12px;border-radius:10px;margin:8px 0 18px}.login{max-width:390px;margin:60px auto}.card{background:white;border:1px solid #e1e6ef;border-radius:16px;margin:16px 0;padding:20px}summary{cursor:pointer;font-weight:bold}small{color:#8792a5}.answer{padding:15px 0;border-bottom:1px solid #edf0f6}.answer:last-child{border:0}.answer h3{font-size:13px;margin:0}.answer p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;color:#58677e}.notice{background:#fff3d6;border-radius:12px;padding:15px}.logout{background:white;color:#68738c;border:1px solid #dce2ef}label{display:block}.team-nav,.paging{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.team-nav a,.paging a{padding:6px 14px;border:1px solid #dce2ef;border-radius:10px;color:#26324a;text-decoration:none;background:white}.team-nav a[aria-current]{background:#2855f5;color:white;border-color:#2855f5}.contact-meta{margin:10px 0 0}.contact-meta div{display:flex;gap:10px;flex-wrap:wrap}.contact-meta dt{color:#58677e}.contact-meta dd{margin:0;overflow-wrap:anywhere}.analytics-list{list-style:none;padding:0;margin:0}.analytics-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0}.analytics-list li+li{border-top:1px solid #e5e8f0}select{font:inherit;display:block;width:100%;background:white;color:inherit;border:1px solid #dce2ef;border-radius:10px;padding:12px;margin:8px 0 18px}.shoot-items{margin:12px 0 18px}.shoot-items label{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf0f6;cursor:pointer}.shoot-items input{width:20px;height:20px;flex:none;margin:0;accent-color:#2855f5}
 .team-brand{display:flex;align-items:center;gap:14px}
@@ -200,8 +200,18 @@ async function websiteAnalytics(request: Request, url: URL) {
 
 export async function GET(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
-  if (!teamAuthenticated(request)) return login(request);
   const url = new URL(request.url);
+  if (url.searchParams.get("view") === "notification-feed") {
+    const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { ...headers, "Content-Type": "application/json" } });
+    if (!teamAuthenticated(request)) return json({ error: "unauthorized" }, 401);
+    try {
+      const { teamNotifications } = await import("../../lib/team-notifications");
+      return json({ items: await teamNotifications() });
+    } catch {
+      return json({ error: "storage_unavailable" }, 503);
+    }
+  }
+  if (!teamAuthenticated(request)) return login(request);
   if (url.searchParams.get("view") === "shoots") {
     const navigation = teamNavigation(request, "shoots");
     try {
