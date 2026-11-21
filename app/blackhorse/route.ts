@@ -1,3 +1,4 @@
+import { dashboardOnboarding, requireOnboarding } from "../../lib/onboarding";
 import { feedbackKinds, isFeedbackKind } from "../../lib/feedback-types";
 import { getPricing, pricingFromForm, savePricing } from "../../lib/pricing-store";
 import { pricedPlans } from "../../lib/pricing-plans";
@@ -226,6 +227,12 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const view = url.searchParams.get("view");
   const role = teamRole(request);
+  if (role) {
+    const destination = role === "creator" ? "/blackhorse?view=shoots" : "/blackhorse";
+    if (view === "onboarding") return dashboardOnboarding(request, "team", "team:" + role, readCookie(request, "romava_team_session"), destination);
+    const setup = await requireOnboarding("team", "team:" + role);
+    if (setup) return view === "notification-feed" && setup.status === 303 ? Response.json({ error: "onboarding_required" }, { status: 403, headers: { ...headers, "Content-Type": "application/json" } }) : setup;
+  }
   if (view === "notification-feed") {
     const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { ...headers, "Content-Type": "application/json" } });
     if (role !== "manager") return json({ error: "unauthorized" }, role ? 403 : 401);
@@ -272,9 +279,18 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
+  const roleForSetup = teamRole(request);
+  if (new URL(request.url).searchParams.get("view") === "onboarding") {
+    if (!roleForSetup) return login(request);
+    return dashboardOnboarding(request, "team", "team:" + roleForSetup, readCookie(request, "romava_team_session"), roleForSetup === "creator" ? "/blackhorse?view=shoots" : "/blackhorse");
+  }
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Unsupported form", { status: 415, headers });
   const form = await request.formData();
   const action = form.get("action");
+  if (roleForSetup && action && action !== "logout") {
+    const setup = await requireOnboarding("team", "team:" + roleForSetup);
+    if (setup) return setup;
+  }
   if (typeof action === "string" && action.startsWith("shoot-")) {
     const csrf = hash(readCookie(request, "romava_team_session") + ":shoot-checklists");
     if (!teamAuthenticated(request) || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });

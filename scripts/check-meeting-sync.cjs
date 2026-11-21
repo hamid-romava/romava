@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),ts=require('typescript');
 const env={ROMAVA_TEAM_PASSWORD_HASH:'a'.repeat(64)};
-function load(path,imports={}){const exports={};vm.runInNewContext(ts.transpile(fs.readFileSync(path,'utf8'),{module:ts.ModuleKind.CommonJS}),{exports,require:name=>imports[name]||(name.startsWith(".")?load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts"):require(name)),process:{env},Buffer,Response,Request,Date,URL,Intl});return exports;}
+function load(path,imports={}){const exports={};vm.runInNewContext(ts.transpile(fs.readFileSync(path,'utf8'),{module:ts.ModuleKind.CommonJS}),{exports,require:name=>imports[name]||(name.endsWith("/onboarding")?{requireOnboarding:async()=>null}:null)||(name.startsWith(".")?load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts"):require(name)),process:{env},Buffer,Response,Request,Date,URL,Intl});return exports;}
 const booking=load('lib/meeting-booking.ts');
 const auth=load('lib/report-auth.ts'),report={token:'b'.repeat(48),passwordHash:'c'.repeat(64),data:{name:'تست'}};env.ROMAVA_REPORTS_CONFIG=JSON.stringify({[auth.hash(report.token)]:report});
 const records=new Map(),realStore=load('lib/meeting-store.ts',{'@/lib/report-auth':auth,'@/lib/meeting-booking':booking,mongoose:{}});
@@ -120,6 +120,35 @@ assert.match(addendumHtml,/href="\/culture"/);
 assert.match(addendumHtml,/view=qc/);
 assert.match(addendumHtml,/view=shoots/);
 assert.doesNotMatch(addendumHtml,/view=(requests|analytics|pricing|feedback)|id="team-notification-toggle"/);
+const setupProgress = new Map();
+const onboarding = load('lib/onboarding.ts', {
+ '@/lib/mongodb': { default: Promise.resolve({db:()=>({collection:()=>({
+  findOne:async ({_id})=>setupProgress.get(_id) ?? null,
+  updateOne:async ({_id,step}, {$set})=>{
+   assert.equal(setupProgress.get(_id)?.step ?? 0, step);
+   setupProgress.set(_id, $set);
+   return {matchedCount:1};
+  },
+ })})}) },
+});
+const setupURL = 'https://example.com/r/onboarding';
+const dashboardURL = '/r/sample?view=monthly';
+const setupSession = 'sample-session';
+const setupPost = (step, confirmed='1', csrf=auth.hash(setupSession+':dashboard-onboarding')) =>
+ onboarding.dashboardOnboarding(new Request(setupURL,{method:'POST',body:new URLSearchParams({step,confirmed,csrf})}),'client','client:sample',setupSession,dashboardURL);
+assert.equal((await onboarding.requireOnboarding('client','client:sample')).headers.get('location'),'/r/onboarding');
+assert.equal((await setupPost('1')).headers.get('location'),'/r/onboarding');
+assert.equal((await setupPost('0','0')).headers.get('location'),'/r/onboarding');
+assert.equal((await setupPost('0','1','bad')).status,403);
+assert.equal(setupProgress.size,0);
+for(const [index,title] of ['شناخت و اصول همکاری','گزارش ماهانه','چک‌لیست آمادگی آفیش'].entries()){
+ const current=await onboarding.dashboardOnboarding(new Request(setupURL),'client','client:sample',setupSession,dashboardURL);
+ assert.ok((await current.text()).includes(title));
+ assert.equal((await setupPost(String(index))).headers.get('location'),index===2 ? dashboardURL : '/r/onboarding');
+}
+assert.equal(await onboarding.requireOnboarding('client','client:sample'),null);
+assert.equal((await onboarding.requireOnboarding('client','client:other')).status,303);
+assert.equal((await onboarding.requireOnboarding('team','team:creator')).status,303);
 const forged=await teamRoute.POST(new Request('https://example.com/blackhorse',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({username:'romava',password:'team-test-password',csrf:nonce})}));
 assert(!forged.headers.get('set-cookie').startsWith('romava_team_session='));
 console.log('PASS meeting sync: authenticated account, origin/validation, persistent readback, conflict protection, separate team session, tampering');})().catch(e=>{console.error(e);process.exitCode=1;});

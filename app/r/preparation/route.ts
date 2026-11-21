@@ -1,3 +1,4 @@
+import { requireOnboarding } from "@/lib/onboarding";
 import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { preparationTemplate } from "@/lib/preparation-template";
 import { authenticated, hash, htmlHeaders, reports } from "@/lib/report-auth";
@@ -10,6 +11,8 @@ export async function GET(request: Request) {
   try { report = Object.values(reports()).find(item => authenticated(request, item)); }
   catch { return new Response("Reports unavailable", { status: 503, headers: htmlHeaders }); }
   if (!report) return new Response(null, { status: 303, headers: { ...htmlHeaders, Location: "/admin" } });
+  const setup = await requireOnboarding("client", "client:" + hash(report.token));
+  if (setup) return setup;
   return new Response(clientNavigation(preparationTemplate(report.token, hash(`preparation-v1:${report.token}`)), report.token, "/r/preparation"), {
     headers: { ...htmlHeaders, "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" },
   });

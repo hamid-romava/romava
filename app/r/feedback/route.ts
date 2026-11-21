@@ -1,3 +1,4 @@
+import { requireOnboarding } from "@/lib/onboarding";
 import { feedbackKinds, isFeedbackKind } from "../../../lib/feedback-types";
 import { appendFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -34,15 +35,19 @@ function page(request: Request, report: Report, message = "", status = 200) {
 
 const login = () => new Response(null, { status: 303, headers: { ...htmlHeaders, Location: "/admin" } });
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const report = account(request);
   if (!report) return login();
+  const setup = await requireOnboarding("client", "client:" + hash(report.token));
+  if (setup) return setup;
   return page(request, report);
 }
 
 export async function POST(request: Request) {
   const report = account(request);
   if (!report) return login();
+  const setup = await requireOnboarding("client", "client:" + hash(report.token));
+  if (setup) return setup;
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return page(request, report, "فرم رو دوباره باز کن و پیامت رو بفرست.", 415);
   if (Number(request.headers.get("content-length")) > 40000) return page(request, report, "پیامت باید کوتاه‌تر از ۳۰۰۰ نویسه باشه.", 413);
   const body = await request.text();

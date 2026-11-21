@@ -13,7 +13,7 @@ const env = { ROMAVA_REPORTS_CONFIG: JSON.stringify({ [hash(tokenA)]: reportA, [
 function load(path, imports = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpile(fs.readFileSync(path, 'utf8'), { module: ts.ModuleKind.CommonJS }), {
-    exports, require: name => imports[name] || (name.startsWith(".") ? load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts") : require(name)), process: { env }, Buffer, Response, Request, Date, URL,
+    exports, require: name => imports[name] || (name.endsWith("/onboarding") ? { requireOnboarding: async () => null } : null) || (name.startsWith(".") ? load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts") : require(name)), process: { env }, Buffer, Response, Request, Date, URL,
   });
   return exports;
 }

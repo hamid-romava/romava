@@ -1,6 +1,7 @@
+import { requireOnboarding } from "@/lib/onboarding";
 import { getPricing } from "../../../../lib/pricing-store";
 import { reportMeetingMonth, meetingMonthTitle } from "@/lib/meeting-booking";
-import { authenticated, meetingCsrf, reportHeaders, reports } from "@/lib/report-auth";
+import { authenticated, hash, meetingCsrf, reportHeaders, reports } from "@/lib/report-auth";
 import { clientMeetings, saveMeeting, validSession, validateAnswers } from "@/lib/meeting-store";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +10,9 @@ function account(request: Request) { return Object.values(reports()).find(report
 export async function GET(request: Request) {
   try {
     const report = account(request); if (!report) return json({ error: "unauthorized" }, 401);
+    const setup = await requireOnboarding("client", "client:" + hash(report.token));
+    if (setup) return json({ error: "onboarding_required" }, setup.status === 303 ? 403 : setup.status);
+
     const sessions = await clientMeetings(report.token);
     return json({ sessions });
   } catch { return json({ error: "storage_unavailable" }, 503); }
@@ -16,6 +20,9 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const report = account(request); if (!report) return json({ error: "unauthorized" }, 401);
+    const setup = await requireOnboarding("client", "client:" + hash(report.token));
+    if (setup) return json({ error: "onboarding_required" }, setup.status === 303 ? 403 : setup.status);
+
     if (request.headers.get("x-csrf-token") !== meetingCsrf(request)) return json({ error: "forbidden" }, 403);
     if (!request.headers.get("content-type")?.startsWith("application/json")) return json({ error: "invalid_content_type" }, 415);
     if (Number(request.headers.get("content-length") || 0) > 150000) return json({ error: "too_large" }, 413);

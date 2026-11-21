@@ -1,3 +1,4 @@
+import { requireOnboarding } from "@/lib/onboarding";
 import { getPricing } from "../../../lib/pricing-store";
 import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { reportMeetingMonth } from "@/lib/meeting-booking";
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
   try { report = Object.values(reports()).find(item => authenticated(request, item)); }
   catch { return new Response("Reports unavailable", { status: 503, headers: htmlHeaders }); }
   if (!report) return new Response(null, { status: 303, headers: { ...htmlHeaders, Location: "/admin" } });
+  const setup = await requireOnboarding("client", "client:" + hash(report.token));
+  if (setup) return setup;
   const pricing = await getPricing().catch(() => null);
   if (!pricing) return new Response("Pricing unavailable", { status: 503, headers: htmlHeaders });
   return new Response(clientNavigation(meetingTemplate(report.token, hash(`meeting-v1:${report.token}`), currentCycle(), meetingCsrf(request), reportMeetingMonth(report), pricing), report.token, "/r/meeting"), {

@@ -1,3 +1,4 @@
+import { requireOnboarding } from "@/lib/onboarding";
 import { reportSheet } from "../../../lib/report-sheet";
 import { reportOverview } from "../../../lib/report-trends";
 import { clientNavigation } from "../../../lib/dashboard-navigation";
@@ -23,6 +24,8 @@ export async function GET(request: Request, { params }: Context) {
   const report = findReport(token);
   if (report instanceof Response) return report;
   if (!authenticated(request, report)) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: "/admin" } });
+  const setup = await requireOnboarding("client", "client:" + hash(report.token));
+  if (setup) return setup;
   const months = Object.keys(report.months || {}).filter(key => /^[1-9]\d*$/.test(key)).sort((a, b) => Number(a) - Number(b));
   const query = new URL(request.url).searchParams;
   const embedded = query.get("sheet") === "1";
