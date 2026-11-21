@@ -106,20 +106,23 @@ export function clientNavigation(html: string, token: string, current: string) {
 
 export function teamNavigationLayout(html: string, view: string, backToShoots: boolean) {
   if (!html.includes('id="team-menu"')) return html;
-  const active = html.match(/href="\/blackhorse\?view=([a-z]+)" aria-current="page"/)?.[1] ?? view;
+  const active = html.match(/href="\/blackhorse\?view=([a-z-]+)" aria-current="page"/)?.[1] ?? view;
   const team='/blackhorse';
+  const creator = html.includes('data-team-role="creator"');
   const logout=html.match(/<form method="post" action="\/blackhorse">[\s\S]*?<\/form>/)?.[0];
   if(logout)html=html.replace(logout,'').replace('</nav>\n  </div>',()=>'</nav>'+logout.replace('>خروج<','>خروج از حساب<')+'</div>');
-  const bottomTabs: Tab[] = [[team+'?view=requests','درخواست‌ها','inbox'],[team+'?view=analytics','آمار سایت','chart'],[team+'?view=shoots','چک‌لیست آفیش','shoot']];
+  const bottomTabs: Tab[] = creator
+    ? [[team+'?view=shoots','چک‌لیست آفیش','shoot'],[team+'?view=qc','QC سایت','prep']]
+    : [[team+'?view=requests','درخواست‌ها','inbox'],[team+'?view=analytics','آمار سایت','chart'],[team+'?view=shoots','چک‌لیست آفیش','shoot']];
   html=html.replace(/(<nav class="team-nav team-menu-links"[^>]*>)([\s\S]*?)<\/nav>/,(_all,open,links: string)=>{
     const extraLinks = links.replace(/<a href="([^"]+)"[^>]*>[^<]*<\/a>/g, (link, href) =>
-      bottomTabs.some(([url]) => url === href) ? "" : link);
-    return open + extraLinks + `<a href="/blackhorse?view=feedback"${active === "feedback" ? ' aria-current="page"' : ""}>بازخورد مشتری‌ها</a></nav>`;
+      bottomTabs.some(([url]) => url === href) || (creator && href !== team+"?view=culture-addendum") ? "" : link);
+    return open + extraLinks + (creator ? "" : `<a href="/blackhorse?view=feedback"${active === "feedback" ? ' aria-current="page"' : ""}>بازخورد مشتری‌ها</a>`) + "</nav>";
   });
   html=html.replace(/<header[^>]*>/,'<header class="app-header">')
     .replace(/<p><a href="\/blackhorse\?view=shoots">← برگشت به آفیش‌ها<\/a><\/p>/,'');
-  const notificationButton = `<button id="team-notification-toggle" class="app-button" type="button" popovertarget="team-notifications" aria-label="نوتیفیکیشن‌ها">${icon('bell')}<span class="team-notification-count" id="team-notification-count" hidden></span></button>`;
+  const notificationButton = creator ? "" : `<button id="team-notification-toggle" class="app-button" type="button" popovertarget="team-notifications" aria-label="نوتیفیکیشن‌ها">${icon('bell')}<span class="team-notification-count" id="team-notification-count" hidden></span></button>`;
   html=html.replace('</header>',()=>`<div class="team-header-actions">${notificationButton}${backToShoots ? back(team+'?view=shoots','برگشت به آفیش‌ها') : ''}</div></header>`);
-  const notifications = '<section class="team-notifications" id="team-notifications" popover aria-labelledby="team-notification-title"><h2 id="team-notification-title">نوتیفیکیشن‌ها</h2><p id="team-notification-status" role="status">در حال دریافت…</p><ul id="team-notification-list"></ul></section><script src="/team-notifications.js" defer></script>';
+  const notifications = creator ? '' : '<section class="team-notifications" id="team-notifications" popover aria-labelledby="team-notification-title"><h2 id="team-notification-title">نوتیفیکیشن‌ها</h2><p id="team-notification-status" role="status">در حال دریافت…</p><ul id="team-notification-list"></ul></section><script src="/team-notifications.js" defer></script>';
   return html.replace('</head>',`<style>${css}</style></head>`).replace('</body>',()=>notifications+tabs(bottomTabs,active?team+'?view='+active:team)+'</body>');
 }

@@ -6,7 +6,7 @@ import type { MongoClient } from "mongodb";
 import { bookingLines } from "@/lib/meeting-booking";
 import { hash, equal, htmlHeaders } from "@/lib/report-auth";
 import { listMeetings } from "@/lib/meeting-store";
-import { loginNonce, readCookie, teamAuthenticated, teamConfigured, teamCookie } from "@/lib/team-auth";
+import { loginNonce, readCookie, teamAuthenticated, teamConfigured, teamCookie, teamPasswordHash, teamRole, type TeamRole } from "@/lib/team-auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
@@ -27,13 +27,13 @@ function page(body: string, view = "", backToShoots = false) { return teamNaviga
 .card textarea{display:block;width:100%;font:inherit;color:inherit;border:1px solid #dce2ef;border-radius:10px;padding:12px;margin:8px 0 18px;resize:vertical}</style></head><body><div class="page">${body}</div></body></html>`, view, backToShoots); }
 function login(request: Request, error = "") {
   const nonce = loginNonce();
-  return new Response(page(`<header><img src="${dashboardLogo}" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>پاسخ‌های جلسه اینجاست.</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/blackhorse; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
+  return new Response(page(`<header><img src="${dashboardLogo}" alt="روماوا"><span>ورود تیم</span></header><form class="login" method="post"><h1>ورود به داشبورد تیم</h1>${error ? `<p role="alert">${escape(error)}</p>` : ""}<input type="hidden" name="csrf" value="${nonce}"><label>نام کاربری<input name="username" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button>ورود به پنل تیم</button></form>`), { headers: { ...headers, "Set-Cookie": `romava_team_csrf=${nonce}; Path=/blackhorse; HttpOnly; SameSite=Strict; Max-Age=600${new URL(request.url).protocol === "https:" ? "; Secure" : ""}` } });
 }
 const analyticsTestCookie = "romava_ga_test";
 
-function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing" | "feedback") {
+function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing" | "feedback" | "culture-addendum") {
   return `<header>
-    <div class="team-brand">
+    <div class="team-brand"${teamRole(request) === "creator" ? ' data-team-role="creator"' : ""}>
       <button type="button" class="team-menu-toggle" popovertarget="team-menu" aria-label="منوی پنل تیم">
         <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
       </button>
@@ -55,6 +55,7 @@ function teamNavigation(request: Request, active: "meetings" | "requests" | "ana
     <a href="/blackhorse?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
     <a href="/blackhorse?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a>
     <a href="/blackhorse?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a>
+    <a href="/blackhorse?view=culture-addendum"${active === "culture-addendum" ? ' aria-current="page"' : ""}>متمم فرهنگ‌نامه</a>
     <a href="/blackhorse?view=shoots"${active === "shoots" ? ' aria-current="page"' : ""}>چک‌لیست آفیش</a>
     </nav>
   </div>`;
@@ -198,12 +199,36 @@ async function websiteAnalytics(request: Request, url: URL) {
   }
 }
 
+function cultureAddendum(request: Request) {
+  const navigation = teamNavigation(request, "culture-addendum").replace("</header>", "<h1>متمم فرهنگ‌نامه</h1></header>");
+  return new Response(page(`${navigation}
+    <style>
+      .culture-sheet{position:fixed;inset:auto 0 0;width:min(100%,920px);height:94dvh;max-width:none;max-height:none;margin:0 auto;padding:0;border:1px solid #dce3f0;border-radius:22px 22px 0 0;background:#fff;color:#26324a;overflow:hidden}
+      .culture-sheet[open]{display:grid;grid-template-rows:auto minmax(0,1fr)}
+      .culture-sheet::backdrop{background:#17203d66}
+      .culture-sheet-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid #e1e6ef}
+      .culture-sheet-bar form{margin:0}.culture-sheet-bar button{font-size:24px}
+      .culture-sheet iframe{width:100%;height:100%;border:0}
+      html:has(.culture-sheet[open]){overflow:hidden}
+      @media(prefers-reduced-motion:no-preference){.culture-sheet[open]{animation:culture-sheet-in .28s ease-out}@keyframes culture-sheet-in{from{transform:translateY(100%)}to{transform:translateY(0)}}}
+    </style>
+    <p><a href="/culture" id="open-culture" aria-haspopup="dialog">اول فرهنگ‌نامه رو توی سایت بخون ←</a></p>
+    <dialog class="culture-sheet" id="culture-sheet" aria-labelledby="culture-sheet-title">
+      <div class="culture-sheet-bar"><strong id="culture-sheet-title">فرهنگ‌نامه</strong><form method="dialog"><button class="app-button" type="submit" aria-label="بستن فرهنگ‌نامه" autofocus>×</button></form></div>
+      <iframe id="culture-frame" title="فرهنگ‌نامه روماوا"></iframe>
+    </dialog><script src="/team-culture-sheet.js" defer></script>
+    <article class="card"><h2>رازدار زره‌پوش</h2>
+    <p>یه سری چیزها رازهای بین خودمونه و واسشون زره می‌پوشیم. هر چیزی که توی سایت روماوا منتشر نشده بین خودمون می‌مونه. مثلاً قیمت طرح‌ها، مدل کار کردنمون و استراتژی‌های فصلی و ماهانه.</p></article>`, "culture-addendum"), { headers: { ...headers, "Content-Security-Policy": headers["Content-Security-Policy"] + "; frame-src 'self'" } });
+}
+
 export async function GET(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
   const url = new URL(request.url);
-  if (url.searchParams.get("view") === "notification-feed") {
+  const view = url.searchParams.get("view");
+  const role = teamRole(request);
+  if (view === "notification-feed") {
     const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { ...headers, "Content-Type": "application/json" } });
-    if (!teamAuthenticated(request)) return json({ error: "unauthorized" }, 401);
+    if (role !== "manager") return json({ error: "unauthorized" }, role ? 403 : 401);
     try {
       const { teamNotifications } = await import("../../lib/team-notifications");
       return json({ items: await teamNotifications() });
@@ -211,7 +236,14 @@ export async function GET(request: Request) {
       return json({ error: "storage_unavailable" }, 503);
     }
   }
-  if (!teamAuthenticated(request)) return login(request);
+  if (!role) return login(request);
+  if (role === "creator") {
+    if (!view) return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse?view=shoots" } });
+    if (view !== "shoots" && view !== "qc" && view !== "culture-addendum") {
+      return new Response("Forbidden", { status: 403, headers });
+    }
+  }
+  if (view === "culture-addendum") return cultureAddendum(request);
   if (url.searchParams.get("view") === "shoots") {
     const navigation = teamNavigation(request, "shoots");
     try {
@@ -257,7 +289,7 @@ export async function POST(request: Request) {
   }
   if (action === "save-pricing") {
     const csrf = hash(readCookie(request, "romava_team_session") + ":pricing");
-    if (!teamAuthenticated(request) || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
+    if (teamRole(request) !== "manager" || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
     const pricing = pricingFromForm(form);
     if (!pricing) return teamPricing(request, 400, "قیمت‌ها باید عدد مثبت به تومان باشن و درصد تخفیف بین ۰ تا ۱۰۰ باشه.");
     try {
@@ -281,6 +313,11 @@ export async function POST(request: Request) {
   const csrf = readCookie(request, "romava_team_csrf");
   if (!/^[a-f0-9]{48}$/.test(csrf) || form.get("csrf") !== csrf) return login(request, "فرم ورود منقضی شده. دوباره وارد شو.");
   const password = form.get("password");
-  if (String(form.get("username") || "").trim().toLowerCase() !== "romava" || typeof password !== "string" || password.length > 256 || !equal(hash(password), process.env.ROMAVA_TEAM_PASSWORD_HASH!)) return login(request, "نام کاربری یا رمز عبور درست نیست.");
-  return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse", "Set-Cookie": teamCookie(request) } });
+  const username = String(form.get("username") || "").trim().toLowerCase();
+  const role: TeamRole | null = username === "romava" ? "manager" : username === "creator" ? "creator" : null;
+  const passwordHash = role && teamPasswordHash(role);
+  if (!role || !passwordHash || typeof password !== "string" || password.length > 256 || !equal(hash(password), passwordHash)) {
+    return login(request, "نام کاربری یا رمز عبور درست نیست.");
+  }
+  return new Response(null, { status: 303, headers: { ...headers, Location: role === "creator" ? "/blackhorse?view=shoots" : "/blackhorse", "Set-Cookie": teamCookie(request, false, role) } });
 }

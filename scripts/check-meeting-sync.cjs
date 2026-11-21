@@ -91,6 +91,35 @@ for(const origin of [null,'null','https://chatgpt.com']){
  const response=await teamRoute.POST(new Request('https://example.com/blackhorse',{method:'POST',headers,body:new URLSearchParams({username:'romava',password:'team-test-password',csrf:nonce})}));
  assert.equal(response.status,303);assert(response.headers.get('set-cookie').startsWith('romava_team_session='));
 }
+env.ROMAVA_CREATOR_PASSWORD_HASH=auth.hash('creator-test-password');
+const creatorLogin=await teamRoute.POST(new Request('https://example.com/blackhorse',{
+ method:'POST',headers:{cookie:loginCookie},body:new URLSearchParams({username:'creator',password:'creator-test-password',csrf:nonce}),
+}));
+assert.equal(creatorLogin.status,303);
+assert.equal(creatorLogin.headers.get('location'),'/blackhorse?view=shoots');
+const creatorCookie=creatorLogin.headers.get('set-cookie').split(';')[0];
+for(const view of ['requests','analytics','feedback','pricing','notification-feed','meetings']){
+ assert.equal((await teamRoute.GET(new Request('https://example.com/blackhorse?view='+view,{headers:{cookie:creatorCookie}}))).status,403);
+}
+assert.equal((await teamRoute.POST(new Request('https://example.com/blackhorse',{
+ method:'POST',headers:{cookie:creatorCookie},body:new URLSearchParams({action:'save-pricing',csrf:auth.hash(creatorCookie.split('=')[1]+':pricing')}),
+}))).status,403);
+const creatorQc=await teamRoute.GET(new Request('https://example.com/blackhorse?view=qc',{headers:{cookie:creatorCookie}}));
+assert.equal(creatorQc.status,200);
+assert.match(await creatorQc.text(),/روشن کردن حالت تست گوگل/);
+const creatorQcWrite=await teamRoute.POST(new Request('https://example.com/blackhorse',{
+ method:'POST',headers:{cookie:creatorCookie},body:new URLSearchParams({action:'analytics-test',enabled:'1',csrf:auth.hash(creatorCookie.split('=')[1]+':analytics-test')}),
+}));
+assert.equal(creatorQcWrite.status,303);
+assert.equal(creatorQcWrite.headers.get('location'),'/blackhorse?view=qc');
+const addendum=await teamRoute.GET(new Request('https://example.com/blackhorse?view=culture-addendum',{headers:{cookie:creatorCookie}}));
+assert.equal(addendum.status,200);
+const addendumHtml=await addendum.text();
+assert.match(addendumHtml,/رازدار زره‌پوش/);
+assert.match(addendumHtml,/href="\/culture"/);
+assert.match(addendumHtml,/view=qc/);
+assert.match(addendumHtml,/view=shoots/);
+assert.doesNotMatch(addendumHtml,/view=(requests|analytics|pricing|feedback)|id="team-notification-toggle"/);
 const forged=await teamRoute.POST(new Request('https://example.com/blackhorse',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({username:'romava',password:'team-test-password',csrf:nonce})}));
 assert(!forged.headers.get('set-cookie').startsWith('romava_team_session='));
 console.log('PASS meeting sync: authenticated account, origin/validation, persistent readback, conflict protection, separate team session, tampering');})().catch(e=>{console.error(e);process.exitCode=1;});
