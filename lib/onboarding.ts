@@ -32,7 +32,7 @@ function setupPath(audience: Audience) {
 export async function requireOnboarding(audience: Audience, id: string) {
   try {
     const setup = await (await dashboardSetup()).findOne({ _id: id });
-    return !setup?.password || setup.step < steps[audience].length ? setupRedirect(setupPath(audience)) : null;
+    return !setup?.password || setup.requirePasswordChange || setup.step < steps[audience].length ? setupRedirect(setupPath(audience)) : null;
   } catch { return unavailable(); }
 }
 
@@ -80,7 +80,7 @@ export async function dashboardOnboarding(
     const collection = await dashboardSetup();
     const setup = await collection.findOne({ _id: id });
     const completed = setup?.step ?? 0;
-    const needsPassword = !setup?.password;
+    const needsPassword = !setup?.password || setup.requirePasswordChange === true;
     const finished = !needsPassword && completed >= flow.length;
     if (changing && !finished) return setupRedirect(setupUrl);
     if (!changing && finished) return setupRedirect(destination);
@@ -107,7 +107,7 @@ export async function dashboardOnboarding(
       const credential = await createDashboardPassword(password);
       const filter = previous ? { _id: id, "password.sessionKey": previous.sessionKey } : { _id: id, password: { $exists: false } };
       const saved = await collection.updateOne(filter,
-        { $set: { password: credential, updatedAt: new Date() }, $setOnInsert: { step: 0 } }, { upsert: needsPassword })
+        { $set: { password: credential, requirePasswordChange: false, updatedAt: new Date() }, $setOnInsert: { step: 0 } }, { upsert: !previous })
         .catch(error => { if (error?.code === 11000) return null; throw error; });
       if (!saved || saved.matchedCount + saved.upsertedCount !== 1) return setupRedirect(path);
       return new Response(null, { status: 303, headers: { ...htmlHeaders,

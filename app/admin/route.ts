@@ -1,6 +1,7 @@
+import { resetTestOnboardingOnce } from "@/lib/dashboard-password";
 import { loginTemplate } from "@/lib/report-login";
 import { randomBytes } from "node:crypto";
-import { createSession, equal, reportLoginKey, htmlHeaders, normalize, reportHeaders, reports, username } from "@/lib/report-auth";
+import { createSession, equal, reportLoginKey, reportAccountId, htmlHeaders, normalize, reportHeaders, reports, username } from "@/lib/report-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +31,9 @@ export async function POST(request: Request) {
     for (const report of Object.values(reports())) {
       if (normalizedName !== username(report)) continue;
       const key = await reportLoginKey(report, password);
-      if (key) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: `/r/${report.token}?view=monthly`, "Set-Cookie": createSession(request, report, key) } });
+      if (!key) continue;
+      if (normalizedName === "کلاینت تست") await resetTestOnboardingOnce(reportAccountId(report));
+      return new Response(null, { status: 303, headers: { ...reportHeaders, Location: `/r/${report.token}?view=monthly`, "Set-Cookie": createSession(request, report, key) } });
     }
     return new Response(loginTemplate(storedCsrf, true), { status: 401, headers: htmlHeaders });
   } catch { return new Response("Reports unavailable", { status: 503, headers: reportHeaders }); }
