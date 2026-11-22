@@ -1,7 +1,10 @@
 const roles = [
   ["کارگردانی و دکوپاژ", 10], ["دیسکاوری", 10], ["اسکریپت و پست‌پروداکشن", 15],
-  ["ادیت و آفیش", 15], ["اکانت‌منیجری", 2.5], ["استوریست", 2.5],
+  ["ادیت و آفیش", 15], ["اکانت‌منیجری", 2], ["استوریست", 2.5],
 ];
+
+const dashboardRole = ["سهم داشبورد سایت از اکانت‌منیجری", 0.5];
+const roleWeight = roles.reduce((total, [, weight]) => total + weight, dashboardRole[1]);
 
 const exchangeUnit = 1_000;
 
@@ -30,12 +33,15 @@ export function calculateProjectShares(projectAmount, exchangeRate = 1) {
     const amount = baseShare + extraShare;
     return { name, baseShare, extraShare, amount, percentage: projectAmount ? (amount / projectAmount) * 100 : 0 };
   };
-  const teamShares = roles.map(([name, weight]) => share(name, baseAmount * (weight / 100), extraTeamBudget * (weight / 55)));
+  const roleShare = ([name, weight]) => share(name, baseAmount * (weight / 100), extraTeamBudget * (weight / roleWeight));
+  const teamShares = roles.map(roleShare);
+  const dashboard = roleShare(dashboardRole);
   const teamAmount = teamShares.reduce((sum, role) => sum + role.amount, 0);
   const teamTotal = { name: "جمع تیم اجرایی", amount: teamAmount, percentage: projectAmount ? (teamAmount / projectAmount) * 100 : 0 };
   const projectSupport = share("مدیریت پروژه، تجهیزات و ایاب‌وذهاب", baseAmount * 0.10);
-  const romava = share("سهم روماوا", baseAmount * 0.35, extraAmount * 0.70);
-  return { projectAmount, baseAmount, extraAmount, extraTeamBudget, teamShares, teamTotal, projectSupport, romava,
+  const romavaCore = share("سهم پایهٔ روماوا", baseAmount * 0.35, extraAmount * 0.70);
+  const romava = share("سهم روماوا", romavaCore.baseShare + dashboard.baseShare, romavaCore.extraShare + dashboard.extraShare);
+  return { projectAmount, baseAmount, extraAmount, extraTeamBudget, teamShares, teamTotal, projectSupport, romava, romavaCore, dashboard,
     allocatedTotal: teamAmount + projectSupport.amount + romava.amount };
 }
 
@@ -51,7 +57,7 @@ if (calculator) {
   const personal = calculator.querySelector("#project-personal");
   const personalAmountOutput = personal.querySelector("#project-personal-amount");
   const personalRateOutput = personal.querySelector("#project-personal-rate");
-  [...roles.map(([name]) => name), "مدیریت پروژه و استراتژی", "جذب"].forEach((name, index) => {
+  [...roles.map(([name]) => name), "مدیریت پروژه و استراتژی", "جذب", "اکانت منیجری اتوماتیک"].forEach((name, index) => {
     const label = document.createElement("label");
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -68,7 +74,7 @@ if (calculator) {
   const money = amount => format.format(amount) + " تومان";
   const millions = amount => format.format(amount / 1_000_000);
   const rate = percentage => format.format(percentage) + "٪";
-  const romavaDescription = "شامل هزینه‌های ماهانه، اجاره، سایت و جذب";
+  const romavaDescription = "شامل هزینه‌های ماهانه، اجاره، سایت، جذب و اکانت منیجری با داشبورد";
 
   function update() {
     const usesCustom = plan.value === "custom";
@@ -93,12 +99,12 @@ if (calculator) {
     personalRateOutput.textContent = rate((personalAmount / amount) * 100) + " از کل پروژه";
     cards.innerHTML = [data.teamTotal, data.projectSupport, data.romava].map(row =>
       `<article><span>${row.name}</span><strong>${money(row.amount)}</strong><span>${rate(row.percentage)} از کل پروژه</span>${row === data.romava ? `<small>${romavaDescription}</small>` : ""}</article>`).join("");
-    table.innerHTML = [...data.teamShares, data.teamTotal, data.projectSupport, data.romava].map(row =>
-      `<tr${row === data.teamTotal ? ' class="team-total"' : ""}><th scope="row">${row.name}</th><td>${millions(row.amount)}</td><td>${rate(row.percentage)}</td></tr>`).join("");
+    table.innerHTML = [...data.teamShares, data.teamTotal, data.projectSupport, data.romavaCore, data.dashboard].map(row =>
+      `<tr${row === data.teamTotal ? ' class="team-total"' : ""}><th scope="row">${row.name}${row === data.dashboard ? " (در جمع کارت روماوا)" : ""}</th><td>${millions(row.amount)}</td><td>${rate(row.percentage)}</td></tr>`).join("");
     results.querySelector("tfoot td").textContent = millions(data.allocatedTotal);
     results.querySelector("tfoot tr td:last-child").textContent = rate(amount ? 100 : 0);
     extra.hidden = data.extraAmount === 0;
-    extra.textContent = extra.hidden ? "" : `از ${money(data.extraAmount)} اضافه بر مرز ${money(data.baseAmount)}، ${money(data.extraTeamBudget)} (۳۰٪) به تیم اجرایی و ${money(data.romava.extraShare)} (۷۰٪) به روماوا می‌رسه.`;
+    extra.textContent = extra.hidden ? "" : `از ${money(data.extraAmount)} اضافه بر مرز ${money(data.baseAmount)}، ${money(data.extraTeamBudget - data.dashboard.extraShare)} به تیم اجرایی و ${money(data.romava.extraShare)} به روماوا می‌رسه. سهم داشبورد سایت هم داخل مبلغ روماواست.`;
   }
 
   plan.addEventListener("change", update);
