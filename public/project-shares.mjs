@@ -1,10 +1,26 @@
+const dashboardRole = ["گزارش سیستمی", 0.5];
+const management = { name: "مدیر پروژه", weight: 2.5, extraWeight: 0, tasks: ["مدیریت پروژه"], locked: true };
 const roles = [
-  ["کارگردانی و دکوپاژ", 10], ["دیسکاوری", 10], ["اسکریپت و پست‌پروداکشن", 15],
-  ["ادیت و آفیش", 15], ["اکانت‌منیجری", 2], ["استوریست", 2.5],
+  { name: "کاوشگر (دیسکاوری)", weight: 10, tasks: ["دیسکاوری"] },
+  { name: "نویسنده و آنالیزور", weight: 15, tasks: ["اسکریپت", "آنالیز"], taskWeights: [14, 1] },
+  { name: "کارگردان", weight: 10, tasks: ["دکوپاژ", "آفیش کارگردانی"] },
+  { name: "تصویرگر (ادیتور)", weight: 15, extraWeight: 12.5, tasks: ["ادیت"] },
+  { name: "آچار فرانسه", weight: 7, tasks: ["آفیش کمک", "استوریست", "هماهنگی و انتشار"], taskWeights: [2.5, 2.5, 2], automated: dashboardRole },
+  management,
+  { name: "جذب", weight: 0, tasks: ["جذب"] },
 ];
+const roleWeight = roles.reduce((total, role) => total + (role.extraWeight ?? role.weight), dashboardRole[1]);
 
-const dashboardRole = ["سهم داشبورد سایت از اکانت‌منیجری", 0.5];
-const roleWeight = roles.reduce((total, [, weight]) => total + weight, dashboardRole[1]);
+function taskWeight(weight, weights, index, count) {
+  return weights ? weight * (weights[index] / weights.reduce((sum, part) => sum + part, 0)) : weight / count;
+}
+
+function weightedTasks({ weight, tasks, taskWeights, extraWeight = weight, extraTaskWeights = taskWeights }) {
+  return tasks.map((name, index) => [
+    name, taskWeight(weight, taskWeights, index, tasks.length),
+    taskWeight(extraWeight, extraTaskWeights, index, tasks.length),
+  ]);
+}
 
 const exchangeUnit = 1_000;
 
@@ -33,15 +49,19 @@ export function calculateProjectShares(projectAmount, exchangeRate = 1) {
     const amount = baseShare + extraShare;
     return { name, baseShare, extraShare, amount, percentage: projectAmount ? (amount / projectAmount) * 100 : 0 };
   };
-  const roleShare = ([name, weight]) => share(name, baseAmount * (weight / 100), extraTeamBudget * (weight / roleWeight));
-  const teamShares = roles.map(roleShare);
+  const roleShare = ([name, weight, extraWeight = weight]) => share(name, baseAmount * (weight / 100), extraTeamBudget * (extraWeight / roleWeight));
+  const teamShares = roles.filter(role => role.weight > 0 && role !== management).map(role => ({
+    ...roleShare([role.name, role.weight, role.extraWeight]),
+    tasks: weightedTasks(role).map(roleShare),
+  }));
   const dashboard = roleShare(dashboardRole);
-  const teamAmount = teamShares.reduce((sum, role) => sum + role.amount, 0);
+  const projectManagement = roleShare([management.tasks[0], management.weight, management.extraWeight]);
+  const teamAmount = teamShares.reduce((sum, role) => sum + role.amount, projectManagement.amount);
   const teamTotal = { name: "جمع تیم اجرایی", amount: teamAmount, percentage: projectAmount ? (teamAmount / projectAmount) * 100 : 0 };
-  const projectSupport = share("مدیریت پروژه، تجهیزات و ایاب‌وذهاب", baseAmount * 0.10);
-  const romavaCore = share("سهم پایهٔ روماوا", baseAmount * 0.35, extraAmount * 0.70);
+  const projectSupport = share("تجهیزات و ایاب‌وذهاب", baseAmount * 0.10);
+  const romavaCore = share("سهم پایهٔ روماوا", baseAmount * 0.30, extraAmount * 0.70);
   const romava = share("سهم روماوا", romavaCore.baseShare + dashboard.baseShare, romavaCore.extraShare + dashboard.extraShare);
-  return { projectAmount, baseAmount, extraAmount, extraTeamBudget, teamShares, teamTotal, projectSupport, romava, romavaCore, dashboard,
+  return { projectAmount, baseAmount, extraAmount, extraTeamBudget, teamShares, taskShares: teamShares.flatMap(role => role.tasks), teamTotal, projectSupport, projectManagement, romava, romavaCore, dashboard,
     allocatedTotal: teamAmount + projectSupport.amount + romava.amount };
 }
 
@@ -57,20 +77,56 @@ if (calculator) {
   const personal = calculator.querySelector("#project-personal");
   const personalAmountOutput = personal.querySelector("#project-personal-amount");
   const personalRateOutput = personal.querySelector("#project-personal-rate");
-  [...roles.map(([name]) => name), "مدیریت پروژه و استراتژی", "جذب", "اکانت منیجری اتوماتیک"].forEach((name, index) => {
-    const label = document.createElement("label");
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = index;
-    checkbox.disabled = index >= roles.length;
-    label.append(checkbox, name);
-    choices.append(label);
-  });
+  const format = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 });
+  let taskIndex = 0;
+  for (const role of roles) {
+    const direct = role.tasks.length === 1 && !role.automated;
+    const group = document.createElement("details");
+    const taskList = document.createElement("div");
+    if (!direct) {
+      group.open = true;
+      const heading = document.createElement("summary");
+      const title = document.createElement("strong");
+      title.textContent = role.name;
+      heading.append(title);
+      const badge = document.createElement("span");
+      badge.textContent = format.format(role.weight + (role.automated?.[1] ?? 0)) + "٪";
+      heading.append(badge);
+      group.append(heading);
+      taskList.className = "project-role-tasks";
+      group.append(taskList);
+      choices.append(group);
+    }
+
+    const tasks = weightedTasks(role);
+    if (role.automated) tasks.push(role.automated);
+    for (const [task, weight] of tasks) {
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.disabled = role.locked || role.weight === 0 || task === role.automated?.[0];
+      if (!checkbox.disabled) checkbox.value = taskIndex++;
+      const labelText = direct ? role.name : task;
+      checkbox.setAttribute("aria-label", labelText);
+      label.append(checkbox, labelText);
+      if (weight > 0) {
+        const badge = document.createElement("span");
+        badge.className = "project-task-weight";
+        badge.textContent = format.format(weight) + "٪";
+        label.append(badge);
+      }
+      if (direct) {
+        label.className = "project-direct-role";
+        choices.append(label);
+      } else {
+        taskList.append(label);
+      }
+    }
+  }
   const results = calculator.querySelector("#project-results");
   const table = results.querySelector("tbody");
   const cards = results.querySelector("#project-totals");
   const extra = results.querySelector("#project-extra");
-  const format = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 });
   const money = amount => format.format(amount) + " تومان";
   const millions = amount => format.format(amount / 1_000_000);
   const rate = percentage => format.format(percentage) + "٪";
@@ -93,13 +149,13 @@ if (calculator) {
 
     const data = calculateProjectShares(amount, exchangeRate);
     const selected = Array.from(choices.querySelectorAll("input:checked:not(:disabled)"));
-    const personalAmount = selected.reduce((sum, checkbox) => sum + data.teamShares[Number(checkbox.value)].amount, 0);
+    const personalAmount = selected.reduce((sum, checkbox) => sum + data.taskShares[Number(checkbox.value)].amount, 0);
     personal.hidden = selected.length === 0;
     personalAmountOutput.textContent = money(personalAmount);
     personalRateOutput.textContent = rate((personalAmount / amount) * 100) + " از کل پروژه";
     cards.innerHTML = [data.teamTotal, data.projectSupport, data.romava].map(row =>
       `<article><span>${row.name}</span><strong>${money(row.amount)}</strong><span>${rate(row.percentage)} از کل پروژه</span>${row === data.romava ? `<small>${romavaDescription}</small>` : ""}</article>`).join("");
-    table.innerHTML = [...data.teamShares, data.teamTotal, data.projectSupport, data.romavaCore, data.dashboard].map(row =>
+    table.innerHTML = [...data.teamShares, data.projectManagement, data.teamTotal, data.projectSupport, data.romavaCore, data.dashboard].map(row =>
       `<tr${row === data.teamTotal ? ' class="team-total"' : ""}><th scope="row">${row.name}${row === data.dashboard ? " (در جمع کارت روماوا)" : ""}</th><td>${millions(row.amount)}</td><td>${rate(row.percentage)}</td></tr>`).join("");
     results.querySelector("tfoot td").textContent = millions(data.allocatedTotal);
     results.querySelector("tfoot tr td:last-child").textContent = rate(amount ? 100 : 0);
