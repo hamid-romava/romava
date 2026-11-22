@@ -3,7 +3,7 @@ import { reportSheet } from "../../../lib/report-sheet";
 import { reportOverview } from "../../../lib/report-trends";
 import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { reportTemplate } from "@/lib/report-template";
-import { authenticated, hash, htmlHeaders, reportHeaders, reports, sessionCookie } from "@/lib/report-auth";
+import { reportDisplayName, authenticated, hash, htmlHeaders, reportHeaders, reports, sessionCookie } from "@/lib/report-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +35,7 @@ export async function GET(request: Request, { params }: Context) {
   const selected = requested ?? months.at(-1);
   if (requested !== null && !months.includes(requested)) return new Response("Month not found", { status: 404, headers: reportHeaders });
   const monthly = selected && report.months ? report.months[selected] : report.data;
-  const data = JSON.stringify({ ...monthly, name: report.data.name }).replace(/</g, "\\u003c");
+  const data = JSON.stringify({ ...monthly, name: reportDisplayName(report) }).replace(/</g, "\\u003c");
   const labels: Record<string, string> = { "1": "ماه اول", "2": "ماه دوم", "3": "ماه سوم", "4": "ماه چهارم", "5": "ماه پنجم", "6": "ماه ششم", "7": "ماه هفتم", "8": "ماه هشتم", "9": "ماه نهم", "10": "ماه دهم", "11": "ماه یازدهم", "12": "ماه دوازدهم" };
   const monthPicker = months.length ? `<form class="month-picker" method="get"><div class="month-controls"><select id="report-month" name="month" aria-label="انتخاب ماه گزارش">${months.map(month => `<option value="${month}"${month === selected ? " selected" : ""}>${labels[month] || `ماه ${new Intl.NumberFormat("fa-IR").format(Number(month))}`}</option>`).join("")}</select><button type="submit">نمایش</button></div></form>` : "";
   const path = `/r/${token}`;

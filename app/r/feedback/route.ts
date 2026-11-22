@@ -5,7 +5,7 @@ import { join } from "node:path";
 import type { MongoClient } from "mongodb";
 
 import { clientNavigation } from "../../../lib/dashboard-navigation";
-import { activeReport, hash, htmlHeaders, meetingCsrf, type Report } from "../../../lib/report-auth";
+import { reportDisplayName, activeReport, hash, htmlHeaders, meetingCsrf, type Report } from "../../../lib/report-auth";
 
 const path = "/r/feedback";
 
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   if (!isFeedbackKind(kind) || !message || message.length > 3000) return page(request, report, "نوع پیام رو انتخاب کن و متنش رو بنویس.", 400);
   try {
     const feedback = {
-      clientId: hash(report.token), clientName: report.data.name, kind, message, createdAt: new Date(),
+      clientId: hash(report.token), clientName: reportDisplayName(report), kind, message, createdAt: new Date(),
     };
     const testConfig = process.env.NODE_ENV === "development" && process.env.ROMAVA_TEST_REPORT_CONFIG;
     const isLocalTest = testConfig && JSON.parse(testConfig).digest === feedback.clientId

@@ -148,6 +148,14 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   assert.equal((await call(admin,'/admin',{method:'POST',username:'نمونه نام خانوادگی',password:'test-a-strong-password'})).status,401);
   assert.equal((await call(admin,'/admin',{method:'POST',username:'نمونه نام خانوادگی',password})).status,303);
   assert.equal((await call(dashboard,`/r/${tokenB}`,{cookie:secondCookie})).status,200);
+  env.ROMAVA_REPORT_LOGIN_NAMES = JSON.stringify({ [hash(tokenA)]: 'کاربر آزمایشی' });
+  assert.equal((await call(admin,'/admin',{method:'POST',username:'کاربر آزمایشی',password})).status,401);
+  const testClient = await call(admin,'/admin',{method:'POST',username:'کلاینت تست',password});
+  assert.equal(testClient.status,303);
+  const testDashboard = await call(dashboard,`/r/${tokenA}`,{cookie:rotatedCookie});
+  assert.equal(testDashboard.status,200);
+  const testMonthly = await dashboard.GET(new Request(`https://example.com/r/${tokenA}?month=1`, {headers:{cookie:rotatedCookie}}),{params:Promise.resolve({token:tokenA})});
+  assert.match(await testMonthly.text(),/کلاینت تست/);
   env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
   console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF token, 404/503');
 })().catch(error => { console.error(error); process.exitCode = 1; });

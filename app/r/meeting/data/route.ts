@@ -1,7 +1,7 @@
 import { requireOnboarding } from "@/lib/onboarding";
 import { getPricing } from "../../../../lib/pricing-store";
 import { reportMeetingMonth, meetingMonthTitle } from "@/lib/meeting-booking";
-import { activeReport, hash, meetingCsrf, reportHeaders } from "@/lib/report-auth";
+import { reportDisplayName, activeReport, hash, meetingCsrf, reportHeaders } from "@/lib/report-auth";
 import { clientMeetings, saveMeeting, validSession, validateAnswers } from "@/lib/meeting-store";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export async function PUT(request: Request) {
     if (typeof input.quotedTotal === "number" && input.quotedTotal !== answers.booking?.totalPrice) {
       return json({ error: "price_changed" }, 412);
     }
-    const saved = await saveMeeting(report.token, report.data.name, input.sessionId, answers, { reportMonth, renewalMonth: reportMonth + 1, meetingTitle: meetingMonthTitle(reportMonth) });
+    const saved = await saveMeeting(report.token, reportDisplayName(report), input.sessionId, answers, { reportMonth, renewalMonth: reportMonth + 1, meetingTitle: meetingMonthTitle(reportMonth) });
     return saved ? json(saved) : json({ error: "already_submitted" }, 409);
   } catch (error) { return json({ error: error instanceof SyntaxError ? "invalid_json" : "storage_unavailable" }, error instanceof SyntaxError ? 400 : 503); }
 }

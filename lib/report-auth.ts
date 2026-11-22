@@ -17,8 +17,10 @@ export const normalize = (value: string) => value.normalize("NFKC").replace(/ي/
 export function username(report: Report) {
   const loginNames = JSON.parse(process.env.ROMAVA_REPORT_LOGIN_NAMES || "{}");
   const loginName = loginNames[hash(report.token)];
-  return normalize(typeof loginName === "string" && loginName.trim() ? loginName : report.data.name);
+  const name = normalize(typeof loginName === "string" && loginName.trim() ? loginName : report.data.name);
+  return name === "کاربر آزمایشی" ? "کلاینت تست" : name;
 }
+export const reportDisplayName = (report: Report) => username(report) === "کلاینت تست" ? "کلاینت تست" : report.data.name;
 export const equal = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const cookieName = "romava_report_session";
 const signature = (report: Report, expiry: string, key: string) => createHmac("sha256", key).update(JSON.stringify(["report-session-v1", report.token, normalize(report.data.name), expiry])).digest("hex");
