@@ -10,10 +10,22 @@ const reportA = { token: tokenA, passwordHash: hash('test-a-strong-password'), d
 const reportB = { token: tokenB, passwordHash: hash('test-b-strong-password'), data: { name: 'نمونه دو', marker: 'PRIVATE_REPORT_B' } };
 reportA.months = { '1': { ...reportA.data, period: 'ماه اول', followerGain: 111 }, '2': { ...reportA.data, period: 'ماه دوم', followerGain: 222 } };
 const env = { ROMAVA_REPORTS_CONFIG: JSON.stringify({ [hash(tokenA)]: reportA, [hash(tokenB)]: reportB }) };
+const setupProgress = new Map();
+const dashboardStorage = { default: Promise.resolve({db:()=>({collection:()=>({
+  findOne:async ({_id})=>setupProgress.get(_id) ?? null,
+  updateOne:async ({_id,step,password}, {$set,$setOnInsert}, options)=>{
+    const row=setupProgress.get(_id);
+    if (password && row?.password) throw Object.assign(new Error('duplicate'),{code:11000});
+    if (step !== undefined && row?.step !== step) return {matchedCount:0,upsertedCount:0};
+    if (!row && !options?.upsert) return {matchedCount:0,upsertedCount:0};
+    setupProgress.set(_id,{...row,...(!row && $setOnInsert),...$set});
+    return {matchedCount:row ? 1 : 0,upsertedCount:row ? 0 : 1};
+  },
+})})}) };
 function load(path, imports = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpile(fs.readFileSync(path, 'utf8'), { module: ts.ModuleKind.CommonJS }), {
-    exports, require: name => imports[name] || (name.endsWith("/onboarding") ? { requireOnboarding: async () => null } : null) || (name.startsWith(".") ? load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts") : require(name)), process: { env }, Buffer, Response, Request, Date, URL,
+    exports, require: name => imports[name] || (name === "@/lib/mongodb" ? dashboardStorage : null) || (name.endsWith("/onboarding") ? { requireOnboarding: async () => null } : null) || (name.startsWith(".") ? load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts") : require(name)), process: { env }, Buffer, Response, Request, Date, URL,
   });
   return exports;
 }
@@ -52,7 +64,7 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
     for (const flag of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Max-Age=28800', `Path=/r`]) assert(setCookie.includes(flag));
     const cookie = setCookie.split(';')[0];
     const result = await dashboard.GET(new Request(`https://example.com/r/${report.token}${report.months ? '?month=1' : ''}`, { headers: { cookie } }), { params: Promise.resolve({ token: report.token }) }); const html = await result.text();
-    assert.equal(result.status, 200); assert(html.includes(report.data.marker)); assert(html.includes('خروج از حساب')); assert(!html.includes('__REPORT_DATA__'));
+    assert.equal(result.status, 200); assert(html.includes(report.data.marker)); assert(html.includes('خروج از حساب')); assert(html.includes('href="/r/onboarding?view=password"')); assert(!html.includes('__REPORT_DATA__'));
     const otherToken = report === reportA ? tokenB : tokenA;
     assert.equal((await call(dashboard, `/r/${otherToken}`, { cookie })).status, 303);
     assert.equal((await call(dashboard, `/r/${report.token}`, { cookie: cookie + 'bad' })).status, 303);
@@ -108,6 +120,34 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
   assert.equal(renamed.status, 303);
   assert.equal(renamed.headers.get('location'), '/r/' + tokenA + '?view=monthly');
   assert.equal((await call(admin, '/admin', { method: 'POST', username: reportA.data.name, password: 'test-a-strong-password' })).status, 401);
+  const onboarding = load('app/r/onboarding/route.ts', {
+    '../../../lib/onboarding': load('lib/onboarding.ts'),
+    '../../../lib/report-auth': auth,
+  });
+  const setupUrl = 'https://example.com/r/onboarding';
+  const setupRequest = new Request(setupUrl, {headers:{cookie:monthCookie}});
+  const setupHtml = await (await onboarding.GET(setupRequest)).text();
+  assert.match(setupHtml,/name="new-password"/);
+  const csrf = setupHtml.match(/name="csrf" value="([a-f0-9]+)"/)[1];
+  const password = 'رمزtest۱';
+  const rotate = (overrides={}) => onboarding.POST(new Request(setupUrl,{method:'POST',headers:{cookie:monthCookie},body:new URLSearchParams({
+    csrf,step:'0','current-password':'test-a-strong-password','new-password':password,'confirm-password':password,...overrides,
+  })}));
+  assert.equal((await rotate({csrf:'wrong'})).status,403);
+  assert.equal((await rotate({'confirm-password':'wrong'})).status,400);
+  assert.equal((await rotate({'current-password':'wrong'})).status,400);
+  assert.equal((await rotate({'new-password':'short'})).status,400);
+  for (const invalid of ['abcdef1', 'abcdefgh', '12345678']) {
+    assert.equal((await rotate({'new-password':invalid, 'confirm-password':invalid})).status,400);
+  }
+  const rotated = await rotate();
+  assert.equal(rotated.headers.get('location'),'/r/onboarding');
+  const rotatedCookie = rotated.headers.get('set-cookie').split(';')[0];
+  assert.equal((await call(dashboard, `/r/${tokenA}`, {cookie:monthCookie})).headers.get('location'),'/admin');
+  assert.equal((await call(dashboard, `/r/${tokenA}`, {cookie:rotatedCookie})).status,200);
+  assert.equal((await call(admin,'/admin',{method:'POST',username:'نمونه نام خانوادگی',password:'test-a-strong-password'})).status,401);
+  assert.equal((await call(admin,'/admin',{method:'POST',username:'نمونه نام خانوادگی',password})).status,303);
+  assert.equal((await call(dashboard,`/r/${tokenB}`,{cookie:secondCookie})).status,200);
   env.ROMAVA_REPORTS_CONFIG = '{'; assert.equal((await call(admin, '/admin', { method: 'POST', username: 'a', password: 'b' })).status, 503);
   console.log('PASS: one private login page, both doctor routes, wrong/legacy/cross-report credentials, signed cookie flags, isolation, tampering, logout, CSRF token, 404/503');
 })().catch(error => { console.error(error); process.exitCode = 1; });

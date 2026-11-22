@@ -1,15 +1,15 @@
 import { requireOnboarding } from "@/lib/onboarding";
 import { getPricing } from "../../../../lib/pricing-store";
 import { reportMeetingMonth, meetingMonthTitle } from "@/lib/meeting-booking";
-import { authenticated, hash, meetingCsrf, reportHeaders, reports } from "@/lib/report-auth";
+import { activeReport, hash, meetingCsrf, reportHeaders } from "@/lib/report-auth";
 import { clientMeetings, saveMeeting, validSession, validateAnswers } from "@/lib/meeting-store";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: reportHeaders });
-function account(request: Request) { return Object.values(reports()).find(report => authenticated(request, report)); }
+
 export async function GET(request: Request) {
   try {
-    const report = account(request); if (!report) return json({ error: "unauthorized" }, 401);
+    const report = await activeReport(request); if (!report) return json({ error: "unauthorized" }, 401);
     const setup = await requireOnboarding("client", "client:" + hash(report.token));
     if (setup) return json({ error: "onboarding_required" }, setup.status === 303 ? 403 : setup.status);
 
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 }
 export async function PUT(request: Request) {
   try {
-    const report = account(request); if (!report) return json({ error: "unauthorized" }, 401);
+    const report = await activeReport(request); if (!report) return json({ error: "unauthorized" }, 401);
     const setup = await requireOnboarding("client", "client:" + hash(report.token));
     if (setup) return json({ error: "onboarding_required" }, setup.status === 303 ? 403 : setup.status);
 

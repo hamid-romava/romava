@@ -1,3 +1,4 @@
+import { dashboardPassword, verifyDashboardPassword } from "./dashboard-password";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 export const reportHeaders = {
@@ -20,7 +21,7 @@ export function username(report: Report) {
 }
 export const equal = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const cookieName = "romava_report_session";
-const signature = (report: Report, expiry: string) => createHmac("sha256", report.passwordHash).update(JSON.stringify(["report-session-v1", report.token, normalize(report.data.name), expiry])).digest("hex");
+const signature = (report: Report, expiry: string, key: string) => createHmac("sha256", key).update(JSON.stringify(["report-session-v1", report.token, normalize(report.data.name), expiry])).digest("hex");
 
 export function reports(): Record<string, Report> {
   const parsed = JSON.parse(process.env.ROMAVA_REPORTS_CONFIG || "{}");
@@ -43,23 +44,38 @@ export function reports(): Record<string, Report> {
   return parsed;
 }
 
-export function authenticated(request: Request, report: Report) {
+export async function authenticated(request: Request, report: Report) {
   const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim()).find(part => part.startsWith(`${cookieName}=`))?.split("=").slice(1).join("=") || "";
   const [expiry, mac] = cookie.split(".");
   const now = Math.floor(Date.now() / 1000);
-  return /^\d{10}$/.test(expiry || "") && Number(expiry) > now && Number(expiry) <= now + lifetime && /^[a-f0-9]{64}$/.test(mac || "") && equal(mac, signature(report, expiry));
+  return /^\d{10}$/.test(expiry || "") && Number(expiry) > now && Number(expiry) <= now + lifetime && /^[a-f0-9]{64}$/.test(mac || "") && equal(mac, signature(report, expiry, (await dashboardPassword(reportAccountId(report)))?.sessionKey ?? report.passwordHash));
 }
 
 export function sessionCookie(request: Request, report: Report, value: string, maxAge: number) {
   return `${cookieName}=${value}; Path=/r; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
 }
 
-export function createSession(request: Request, report: Report) {
+export function createSession(request: Request, report: Report, key = report.passwordHash) {
   const expiry = String(Math.floor(Date.now() / 1000) + lifetime);
-  return sessionCookie(request, report, `${expiry}.${signature(report, expiry)}`, lifetime);
+  return sessionCookie(request, report, `${expiry}.${signature(report, expiry, key)}`, lifetime);
 }
 
 export function meetingCsrf(request: Request) {
   const session = (request.headers.get("cookie") || "").split(";").map(value => value.trim()).find(value => value.startsWith("romava_report_session=")) || "";
   return hash(session + ":meeting-submit-v1");
+}
+
+
+export const reportAccountId = (report: Report) => "client:" + hash(report.token);
+
+export async function activeReport(request: Request) {
+  for (const report of Object.values(reports())) {
+    if (await authenticated(request, report)) return report;
+  }
+}
+
+export async function reportLoginKey(report: Report, password: string) {
+  const credential = await dashboardPassword(reportAccountId(report));
+  if (credential) return await verifyDashboardPassword(password, credential) ? credential.sessionKey : null;
+  return equal(hash(password), report.passwordHash) ? report.passwordHash : null;
 }

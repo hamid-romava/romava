@@ -1,11 +1,11 @@
 import { requireOnboarding } from "./onboarding";
 import { guideSections } from "./client-guides-content";
 import { clientNavigation } from "./dashboard-navigation";
-import { authenticated, hash, htmlHeaders, reports } from "./report-auth";
+import { activeReport, hash, htmlHeaders } from "./report-auth";
 
 export async function clientGuide(request: Request) {
   let report;
-  try { report = Object.values(reports()).find(item => authenticated(request, item)); }
+  try { report = await activeReport(request); }
   catch { return new Response("Reports unavailable", { status: 503, headers: htmlHeaders }); }
   if (!report) return new Response(null, { status: 303, headers: { ...htmlHeaders, Location: "/admin" } });
   const setup = await requireOnboarding("client", "client:" + hash(report.token));

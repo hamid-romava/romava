@@ -2,7 +2,7 @@ import { requireOnboarding } from "@/lib/onboarding";
 import { getPricing } from "../../../lib/pricing-store";
 import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { pricingTemplate } from "@/lib/pricing-template";
-import { authenticated, hash, reports } from "@/lib/report-auth";
+import { activeReport, hash } from "@/lib/report-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ const headers = {
 };
 export async function GET(request: Request) {
   let report;
-  try { report = Object.values(reports()).find(item => authenticated(request, item)); }
+  try { report = await activeReport(request); }
   catch { return new Response("Reports unavailable", { status: 503, headers }); }
   if (!report) return new Response(null, { status: 303, headers: { ...headers, Location: "/admin" } });
   const setup = await requireOnboarding("client", "client:" + hash(report.token));

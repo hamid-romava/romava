@@ -5,13 +5,10 @@ import { join } from "node:path";
 import type { MongoClient } from "mongodb";
 
 import { clientNavigation } from "../../../lib/dashboard-navigation";
-import { authenticated, hash, htmlHeaders, meetingCsrf, reports, type Report } from "../../../lib/report-auth";
+import { activeReport, hash, htmlHeaders, meetingCsrf, type Report } from "../../../lib/report-auth";
 
 const path = "/r/feedback";
 
-function account(request: Request) {
-  return Object.values(reports()).find(report => authenticated(request, report));
-}
 
 function page(request: Request, report: Report, message = "", status = 200) {
   const html = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>انتقادات و پیشنهادات | روماوا</title><style>
@@ -36,7 +33,8 @@ function page(request: Request, report: Report, message = "", status = 200) {
 const login = () => new Response(null, { status: 303, headers: { ...htmlHeaders, Location: "/admin" } });
 
 export async function GET(request: Request) {
-  const report = account(request);
+  const report = await activeReport(request).catch(() => null);
+  if (report === null) return new Response("Reports unavailable", { status: 503, headers: htmlHeaders });
   if (!report) return login();
   const setup = await requireOnboarding("client", "client:" + hash(report.token));
   if (setup) return setup;
@@ -44,7 +42,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const report = account(request);
+  const report = await activeReport(request).catch(() => null);
+  if (report === null) return new Response("Reports unavailable", { status: 503, headers: htmlHeaders });
   if (!report) return login();
   const setup = await requireOnboarding("client", "client:" + hash(report.token));
   if (setup) return setup;

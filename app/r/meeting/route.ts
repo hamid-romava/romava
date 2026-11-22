@@ -4,14 +4,14 @@ import { clientNavigation } from "../../../lib/dashboard-navigation";
 import { reportMeetingMonth } from "@/lib/meeting-booking";
 import { currentCycle } from "@/lib/meeting-store";
 import { meetingTemplate } from "@/lib/meeting-template";
-import { authenticated, hash, meetingCsrf, htmlHeaders, reports } from "@/lib/report-auth";
+import { activeReport, hash, meetingCsrf, htmlHeaders } from "@/lib/report-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   let report;
-  try { report = Object.values(reports()).find(item => authenticated(request, item)); }
+  try { report = await activeReport(request); }
   catch { return new Response("Reports unavailable", { status: 503, headers: htmlHeaders }); }
   if (!report) return new Response(null, { status: 303, headers: { ...htmlHeaders, Location: "/admin" } });
   const setup = await requireOnboarding("client", "client:" + hash(report.token));

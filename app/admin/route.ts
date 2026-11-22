@@ -1,6 +1,6 @@
 import { loginTemplate } from "@/lib/report-login";
 import { randomBytes } from "node:crypto";
-import { createSession, equal, hash, htmlHeaders, normalize, reportHeaders, reports, username } from "@/lib/report-auth";
+import { createSession, equal, reportLoginKey, htmlHeaders, normalize, reportHeaders, reports, username } from "@/lib/report-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,11 +24,14 @@ export async function POST(request: Request) {
   const storedCsrf = (request.headers.get("cookie") || "").split(";").map(part => part.trim()).find(part => part.startsWith(`${csrfCookieName}=`))?.slice(csrfCookieName.length + 1) || "";
   if (typeof submittedCsrf !== "string" || !/^[a-f0-9]{48}$/.test(storedCsrf) || !equal(submittedCsrf, storedCsrf)) return new Response("Forbidden", { status: 403, headers: reportHeaders });
   const name = form.get("username"), password = form.get("password");
-  if (typeof name !== "string" || typeof password !== "string") return new Response(loginTemplate(storedCsrf, true), { status: 401, headers: htmlHeaders });
-  let allReports;
-  try { allReports = Object.values(reports()); } catch { return new Response("Reports unavailable", { status: 503, headers: reportHeaders }); }
-  const passwordHash = hash(password);
-  const report = allReports.find(item => normalize(name) === username(item) && equal(passwordHash, item.passwordHash));
-  if (!report) return new Response(loginTemplate(storedCsrf, true), { status: 401, headers: htmlHeaders });
-  return new Response(null, { status: 303, headers: { ...reportHeaders, Location: `/r/${report.token}?view=monthly`, "Set-Cookie": createSession(request, report) } });
+  if (typeof name !== "string" || typeof password !== "string" || password.length > 256) return new Response(loginTemplate(storedCsrf, true), { status: 401, headers: htmlHeaders });
+  try {
+    const normalizedName = normalize(name);
+    for (const report of Object.values(reports())) {
+      if (normalizedName !== username(report)) continue;
+      const key = await reportLoginKey(report, password);
+      if (key) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: `/r/${report.token}?view=monthly`, "Set-Cookie": createSession(request, report, key) } });
+    }
+    return new Response(loginTemplate(storedCsrf, true), { status: 401, headers: htmlHeaders });
+  } catch { return new Response("Reports unavailable", { status: 503, headers: reportHeaders }); }
 }

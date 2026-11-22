@@ -1,11 +1,11 @@
 import { dashboardOnboarding, setupRedirect } from "../../../lib/onboarding";
-import { authenticated, hash, htmlHeaders, meetingCsrf, reports } from "../../../lib/report-auth";
+import { activeReport, createSession, htmlHeaders, meetingCsrf, reportAccountId } from "../../../lib/report-auth";
 
-function setup(request: Request) {
+async function setup(request: Request) {
   try {
-    const report = Object.values(reports()).find(report => authenticated(request, report));
+    const report = await activeReport(request);
     if (!report) return setupRedirect("/admin");
-    return dashboardOnboarding(request, "client", "client:" + hash(report.token), meetingCsrf(request), `/r/${report.token}?view=monthly`);
+    return dashboardOnboarding(request, "client", reportAccountId(report), meetingCsrf(request), `/r/${report.token}?view=monthly`, report.passwordHash, key => createSession(request, report, key));
   } catch { return new Response("Reports unavailable", { status: 503, headers: htmlHeaders }); }
 }
 

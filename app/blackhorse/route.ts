@@ -6,9 +6,9 @@ import { pricedPlans } from "../../lib/pricing-plans";
 import { dashboardLogo, teamNavigationLayout } from "../../lib/dashboard-navigation";
 import type { MongoClient } from "mongodb";
 import { bookingLines } from "@/lib/meeting-booking";
-import { hash, equal, htmlHeaders } from "@/lib/report-auth";
+import { hash, htmlHeaders } from "@/lib/report-auth";
 import { listMeetings } from "@/lib/meeting-store";
-import { loginNonce, readCookie, teamAuthenticated, teamConfigured, teamCookie, teamPasswordHash, teamRole, type TeamRole } from "@/lib/team-auth";
+import { loginNonce, readCookie, teamConfigured, teamCookie, teamLoginKey, teamPasswordHash, teamRole, type TeamRole } from "@/lib/team-auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
@@ -33,9 +33,9 @@ function login(request: Request, error = "") {
 }
 const analyticsTestCookie = "romava_ga_test";
 
-function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing" | "feedback" | "culture-addendum" | "project-shares") {
+async function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing" | "feedback" | "culture-addendum" | "project-shares") {
   return `<header>
-    <div class="team-brand"${teamRole(request) === "creator" ? ' data-team-role="creator"' : ""}>
+    <div class="team-brand"${(await teamRole(request)) === "creator" ? ' data-team-role="creator"' : ""}>
       <button type="button" class="team-menu-toggle" popovertarget="team-menu" aria-label="منوی پنل تیم">
         <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
       </button>
@@ -60,12 +60,13 @@ function teamNavigation(request: Request, active: "meetings" | "requests" | "ana
     <a href="/blackhorse?view=project-shares"${active === "project-shares" ? ' aria-current="page"' : ""}>ماشین‌حساب تقسیم درآمد</a>
     <a href="/blackhorse?view=culture-addendum"${active === "culture-addendum" ? ' aria-current="page"' : ""}>متمم فرهنگ‌نامه</a>
     <a href="/blackhorse?view=shoots"${active === "shoots" ? ' aria-current="page"' : ""}>چک‌لیست آفیش</a>
+    <a href="/blackhorse?view=password">تغییر رمز</a>
     </nav>
   </div>`;
 }
 
 async function teamPricing(request: Request, status = 200, message = "") {
-  const navigation = teamNavigation(request, "pricing");
+  const navigation = await teamNavigation(request, "pricing");
   try {
     const plans = pricedPlans(await getPricing());
     const csrf = hash(readCookie(request, "romava_team_session") + ":pricing");
@@ -85,10 +86,10 @@ async function teamPricing(request: Request, status = 200, message = "") {
   }
 }
 
-function websiteQc(request: Request) {
+async function websiteQc(request: Request) {
   const testMode = readCookie(request, analyticsTestCookie) === "1";
   const testModeCsrf = hash(readCookie(request, "romava_team_session") + ":analytics-test");
-  return new Response(page(`${teamNavigation(request, "qc")}<h1>QC سایت</h1>
+  return new Response(page(`${await teamNavigation(request, "qc")}<h1>QC سایت</h1>
     <section class="card">
       <h2>حالت تست گوگل</h2>
       <p role="status">${testMode ? "حالت تست گوگل روی همین مرورگر فعاله." : "حالت تست گوگل روی همین مرورگر خاموشه."}</p>
@@ -112,7 +113,7 @@ function contactDate(value: unknown) {
 }
 
 async function websiteRequests(request: Request, url: URL) {
-  const navigation = teamNavigation(request, "requests");
+  const navigation = await teamNavigation(request, "requests");
   const pageSize = 30;
   const requestedPage = Number(url.searchParams.get("page"));
   const current = Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= Math.floor(Number.MAX_SAFE_INTEGER / pageSize) ? requestedPage : 1;
@@ -144,7 +145,7 @@ async function websiteRequests(request: Request, url: URL) {
 
 async function customerFeedback(request: Request, url: URL) {
   const title = "بازخورد مشتری‌ها";
-  const navigation = teamNavigation(request, "feedback");
+  const navigation = await teamNavigation(request, "feedback");
   const heading = navigation.replace("</header>", () => `<h1>${title}</h1></header>`);
   const pageSize = 30;
   const requested = Number(url.searchParams.get("page"));
@@ -169,7 +170,7 @@ async function customerFeedback(request: Request, url: URL) {
 }
 
 async function websiteAnalytics(request: Request, url: URL) {
-  const navigation = teamNavigation(request, "analytics");
+  const navigation = await teamNavigation(request, "analytics");
   const days = url.searchParams.get("days") === "7" ? 7 : 30;
   const rangeLinks = ([7, 30] as const).map(range =>
     `<a href="?view=analytics&amp;days=${range}"${days === range ? ' aria-current="true"' : ""}>${range === 7 ? "۷" : "۳۰"} روز گذشته</a>`
@@ -202,8 +203,8 @@ async function websiteAnalytics(request: Request, url: URL) {
   }
 }
 
-function cultureAddendum(request: Request) {
-  const navigation = teamNavigation(request, "culture-addendum").replace("</header>", "<h1>متمم فرهنگ‌نامه</h1></header>");
+async function cultureAddendum(request: Request) {
+  const navigation = (await teamNavigation(request, "culture-addendum")).replace("</header>", "<h1>متمم فرهنگ‌نامه</h1></header>");
   return new Response(page(`${navigation}
     <style>
       .culture-sheet{position:fixed;inset:auto 0 0;width:min(100%,920px);height:94dvh;max-width:none;max-height:none;margin:0 auto;padding:0;border:1px solid #dce3f0;border-radius:22px 22px 0 0;background:#fff;color:#26324a;overflow:hidden}
@@ -228,10 +229,11 @@ export async function GET(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
   const url = new URL(request.url);
   const view = url.searchParams.get("view");
-  const role = teamRole(request);
+  const role = await teamRole(request).catch(() => undefined);
+  if (role === undefined) return new Response("Team access unavailable", { status: 503, headers });
   if (role) {
     const destination = role === "creator" ? "/blackhorse?view=shoots" : "/blackhorse";
-    if (view === "onboarding") return dashboardOnboarding(request, "team", "team:" + role, readCookie(request, "romava_team_session"), destination);
+    if (view === "onboarding" || view === "password") return dashboardOnboarding(request, "team", "team:" + role, readCookie(request, "romava_team_session"), destination, teamPasswordHash(role)!, key => teamCookie(request, false, role, key));
     const setup = await requireOnboarding("team", "team:" + role);
     if (setup) return view === "notification-feed" && setup.status === 303 ? Response.json({ error: "onboarding_required" }, { status: 403, headers: { ...headers, "Content-Type": "application/json" } }) : setup;
   }
@@ -253,7 +255,7 @@ export async function GET(request: Request) {
     }
   }
   if (view === "project-shares") {
-    const navigation = teamNavigation(request, view).replace("</header>", "<h1>ماشین‌حساب تقسیم درآمد</h1></header>");
+    const navigation = (await teamNavigation(request, view)).replace("</header>", "<h1>ماشین‌حساب تقسیم درآمد</h1></header>");
     try {
       const plans = pricedPlans(await getPricing());
       return new Response(page(navigation + projectCalculator(plans), view), { headers });
@@ -263,7 +265,7 @@ export async function GET(request: Request) {
   }
   if (view === "culture-addendum") return cultureAddendum(request);
   if (url.searchParams.get("view") === "shoots") {
-    const navigation = teamNavigation(request, "shoots");
+    const navigation = await teamNavigation(request, "shoots");
     try {
       const { renderShootChecklists } = await import("@/lib/shoot-checklists");
       const csrf = hash(readCookie(request, "romava_team_session") + ":shoot-checklists");
@@ -285,15 +287,17 @@ export async function GET(request: Request) {
   if (url.searchParams.get("view") === "requests") return websiteRequests(request, url);
   try {
     const rows = await listMeetings();
-    return new Response(page(`${teamNavigation(request, "meetings")}<h1>قبل از جلسه، حرف‌هاش رو بخون.</h1><p>آخرین پاسخ‌های ذخیره‌شده کلاینت‌ها؛ هر ماه جدا نگه داشته می‌شه.</p>${rows.length ? rows.map(row => `<details class="card"><summary>${escape(row.doctorName)} · ${escape(row.meetingTitle || row.cycle)}<br><small>آخرین ذخیره: ${escape(new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(row.updatedAt)))}</small></summary>${row.booking ? `<div class="answer"><h3>طرح، آفیش و پرداخت</h3><p>${escape(bookingLines(row.booking))}</p><small>زمان آفیش پیشنهادی است و نیاز به هماهنگی تیم دارد.</small></div>` : ""}${Object.entries(labels).map(([key,label])=>`<div class="answer"><h3>${label} ${row.ready[key] ? "✓" : ""}</h3><p>${escape(row.notes[key]) || "بدون یادداشت"}</p></div>`).join("")}</details>`).join("") : '<div class="card">هنوز پاسخی ذخیره نشده.</div>'}`), { headers });
-  } catch { return new Response(page(teamNavigation(request, "meetings") + '<p class="notice" role="alert">دریافت پاسخ‌ها فعلاً ممکن نیست. دوباره تلاش کن.</p>'), { status: 503, headers }); }
+    return new Response(page(`${await teamNavigation(request, "meetings")}<h1>قبل از جلسه، حرف‌هاش رو بخون.</h1><p>آخرین پاسخ‌های ذخیره‌شده کلاینت‌ها؛ هر ماه جدا نگه داشته می‌شه.</p>${rows.length ? rows.map(row => `<details class="card"><summary>${escape(row.doctorName)} · ${escape(row.meetingTitle || row.cycle)}<br><small>آخرین ذخیره: ${escape(new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(row.updatedAt)))}</small></summary>${row.booking ? `<div class="answer"><h3>طرح، آفیش و پرداخت</h3><p>${escape(bookingLines(row.booking))}</p><small>زمان آفیش پیشنهادی است و نیاز به هماهنگی تیم دارد.</small></div>` : ""}${Object.entries(labels).map(([key,label])=>`<div class="answer"><h3>${label} ${row.ready[key] ? "✓" : ""}</h3><p>${escape(row.notes[key]) || "بدون یادداشت"}</p></div>`).join("")}</details>`).join("") : '<div class="card">هنوز پاسخی ذخیره نشده.</div>'}`), { headers });
+  } catch { return new Response(page(await teamNavigation(request, "meetings") + '<p class="notice" role="alert">دریافت پاسخ‌ها فعلاً ممکن نیست. دوباره تلاش کن.</p>'), { status: 503, headers }); }
 }
 export async function POST(request: Request) {
   if (!teamConfigured()) return new Response("Team access unavailable", { status: 503, headers });
-  const roleForSetup = teamRole(request);
-  if (new URL(request.url).searchParams.get("view") === "onboarding") {
+  const roleForSetup = await teamRole(request).catch(() => undefined);
+  if (roleForSetup === undefined) return new Response("Team access unavailable", { status: 503, headers });
+  const view = new URL(request.url).searchParams.get("view");
+  if (view === "onboarding" || view === "password") {
     if (!roleForSetup) return login(request);
-    return dashboardOnboarding(request, "team", "team:" + roleForSetup, readCookie(request, "romava_team_session"), roleForSetup === "creator" ? "/blackhorse?view=shoots" : "/blackhorse");
+    return dashboardOnboarding(request, "team", "team:" + roleForSetup, readCookie(request, "romava_team_session"), roleForSetup === "creator" ? "/blackhorse?view=shoots" : "/blackhorse", teamPasswordHash(roleForSetup)!, key => teamCookie(request, false, roleForSetup, key));
   }
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Unsupported form", { status: 415, headers });
   const form = await request.formData();
@@ -304,19 +308,19 @@ export async function POST(request: Request) {
   }
   if (typeof action === "string" && action.startsWith("shoot-")) {
     const csrf = hash(readCookie(request, "romava_team_session") + ":shoot-checklists");
-    if (!teamAuthenticated(request) || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
+    if (!roleForSetup || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
     try {
       const { changeShootChecklist } = await import("@/lib/shoot-checklists");
       const location = await changeShootChecklist(action, form);
       if (location) return new Response(null, { status: 303, headers: { ...headers, Location: location } });
-      return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">اطلاعات فرم رو چک کن.</p><a href="/blackhorse?view=shoots">برگشت به آفیش‌ها</a>'), { status: 400, headers });
+      return new Response(page(await teamNavigation(request, "shoots") + '<p role="alert">اطلاعات فرم رو چک کن.</p><a href="/blackhorse?view=shoots">برگشت به آفیش‌ها</a>'), { status: 400, headers });
     } catch {
-      return new Response(page(teamNavigation(request, "shoots") + '<p role="alert">ذخیره انجام نشد. به فرم برگرد و دوباره تلاش کن.</p>'), { status: 503, headers });
+      return new Response(page(await teamNavigation(request, "shoots") + '<p role="alert">ذخیره انجام نشد. به فرم برگرد و دوباره تلاش کن.</p>'), { status: 503, headers });
     }
   }
   if (action === "save-pricing") {
     const csrf = hash(readCookie(request, "romava_team_session") + ":pricing");
-    if (teamRole(request) !== "manager" || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
+    if (roleForSetup !== "manager" || form.get("csrf") !== csrf) return new Response("Forbidden", { status: 403, headers });
     const pricing = pricingFromForm(form);
     if (!pricing) return teamPricing(request, 400, "قیمت‌ها باید عدد مثبت به تومان باشن و درصد تخفیف بین ۰ تا ۱۰۰ باشه.");
     try {
@@ -329,22 +333,23 @@ export async function POST(request: Request) {
   if (action === "analytics-test") {
     const csrf = hash(readCookie(request, "romava_team_session") + ":analytics-test");
     const enabled = form.get("enabled");
-    if (!teamAuthenticated(request) || form.get("csrf") !== csrf || (enabled !== "0" && enabled !== "1")) {
+    if (!roleForSetup || form.get("csrf") !== csrf || (enabled !== "0" && enabled !== "1")) {
       return new Response("Forbidden", { status: 403, headers });
     }
     const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
     const cookie = `${analyticsTestCookie}=${enabled}; Path=/; Max-Age=${enabled === "1" ? 31536000 : 0}; SameSite=Lax${secure}`;
     return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse?view=qc", "Set-Cookie": cookie } });
   }
-  if (form.get("action") === "logout" && teamAuthenticated(request) && form.get("csrf") === hash(readCookie(request, "romava_team_session") + ":logout")) return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse", "Set-Cookie": teamCookie(request, true) } });
+  if (form.get("action") === "logout" && roleForSetup && form.get("csrf") === hash(readCookie(request, "romava_team_session") + ":logout")) return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse", "Set-Cookie": teamCookie(request, true) } });
   const csrf = readCookie(request, "romava_team_csrf");
   if (!/^[a-f0-9]{48}$/.test(csrf) || form.get("csrf") !== csrf) return login(request, "فرم ورود منقضی شده. دوباره وارد شو.");
   const password = form.get("password");
   const username = String(form.get("username") || "").trim().toLowerCase();
   const role: TeamRole | null = username === "romava" ? "manager" : username === "creator" ? "creator" : null;
-  const passwordHash = role && teamPasswordHash(role);
-  if (!role || !passwordHash || typeof password !== "string" || password.length > 256 || !equal(hash(password), passwordHash)) {
-    return login(request, "نام کاربری یا رمز عبور درست نیست.");
-  }
-  return new Response(null, { status: 303, headers: { ...headers, Location: role === "creator" ? "/blackhorse?view=shoots" : "/blackhorse", "Set-Cookie": teamCookie(request, false, role) } });
+  if (!role || typeof password !== "string" || password.length > 256) return login(request, "نام کاربری یا رمز عبور درست نیست.");
+  try {
+    const key = await teamLoginKey(role, password);
+    if (!key) return login(request, "نام کاربری یا رمز عبور درست نیست.");
+    return new Response(null, { status: 303, headers: { ...headers, Location: role === "creator" ? "/blackhorse?view=shoots" : "/blackhorse", "Set-Cookie": teamCookie(request, false, role, key) } });
+  } catch { return new Response("Team access unavailable", { status: 503, headers }); }
 }

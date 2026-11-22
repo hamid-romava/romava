@@ -1,6 +1,19 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),ts=require('typescript');
 const env={ROMAVA_TEAM_PASSWORD_HASH:'a'.repeat(64)};
-function load(path,imports={}){const exports={};vm.runInNewContext(ts.transpile(fs.readFileSync(path,'utf8'),{module:ts.ModuleKind.CommonJS}),{exports,require:name=>imports[name]||(name.endsWith("/onboarding")?{requireOnboarding:async()=>null}:null)||(name.startsWith(".")?load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts"):require(name)),process:{env},Buffer,Response,Request,Date,URL,Intl});return exports;}
+const setupProgress = new Map();
+const dashboardStorage = { default: Promise.resolve({db:()=>({collection:()=>({
+  findOne:async ({_id})=>setupProgress.get(_id) ?? null,
+  updateOne:async ({_id,step,password,"password.sessionKey":sessionKey}, {$set,$setOnInsert}, options)=>{
+    const row=setupProgress.get(_id);
+    if (password && row?.password) throw Object.assign(new Error('duplicate'),{code:11000});
+    if (sessionKey && row?.password?.sessionKey !== sessionKey) return {matchedCount:0,upsertedCount:0};
+    if (step !== undefined && row?.step !== step) return {matchedCount:0,upsertedCount:0};
+    if (!row && !options?.upsert) return {matchedCount:0,upsertedCount:0};
+    setupProgress.set(_id,{...row,...(!row && $setOnInsert),...$set});
+    return {matchedCount:row ? 1 : 0,upsertedCount:row ? 0 : 1};
+  },
+})})}) };
+function load(path,imports={}){const exports={};vm.runInNewContext(ts.transpile(fs.readFileSync(path,'utf8'),{module:ts.ModuleKind.CommonJS}),{exports,require:name=>imports[name]||(name==="@/lib/mongodb"?dashboardStorage:null)||(name.endsWith("/onboarding")?{requireOnboarding:async()=>null}:null)||(name.startsWith(".")?load(require("node:path").resolve(require("node:path").dirname(path),name)+".ts"):require(name)),process:{env},Buffer,Response,Request,Date,URL,Intl});return exports;}
 const booking=load('lib/meeting-booking.ts');
 const auth=load('lib/report-auth.ts'),report={token:'b'.repeat(48),passwordHash:'c'.repeat(64),data:{name:'تست'}};env.ROMAVA_REPORTS_CONFIG=JSON.stringify({[auth.hash(report.token)]:report});
 const records=new Map(),realStore=load('lib/meeting-store.ts',{'@/lib/report-auth':auth,'@/lib/meeting-booking':booking,mongoose:{}});
@@ -11,7 +24,7 @@ const input={reportMonth:1,sessionId:'12345678-1234-4234-8234-123456789abc',note
 const request=(payload,extra={})=>new Request('https://example.com/r/meeting/data',{method:'PUT',headers:{cookie,origin:'https://example.com','content-type':'application/json','x-csrf-token':auth.meetingCsrf(new Request('https://example.com/r/meeting/data',{headers:{cookie}})),...extra},body:JSON.stringify(payload)});
 (async()=>{assert.equal((await route.GET(new Request('https://example.com/r/meeting/data'))).status,401);assert.equal((await route.PUT(request(input,{'x-csrf-token':'wrong'}))).status,403);assert.equal((await route.PUT(request({...input,notes:{liked:'x'}}))).status,400);assert.equal((await route.PUT(request({...input,quotedTotal:1}))).status,412);assert.equal((await route.PUT(request(input))).status,200);assert.equal((await route.PUT(request({...input,notes:{...input.notes,liked:'overwrite attempt'}}))).status,409);assert.equal((await route.PUT(request({...input,sessionId:'22345678-1234-4234-8234-123456789abc'}))).status,200);assert.equal((await route.PUT(request({...input,sessionId:'32345678-1234-4234-8234-123456789abc',booking:{...input.booking,shootDate:booking.tehranToday()}}))).status,400);assert.equal((await route.PUT(request({...input,booking:undefined}))).status,400);
 assert.equal((await route.PUT(request({...input,reportMonth:2}))).status,422);
-const response=await route.GET(new Request('https://example.com/r/meeting/data',{headers:{cookie}}));const saved=(await response.json()).sessions[0];assert.equal(saved.notes.liked,'متن تست');assert.equal(saved.booking.secondPaymentDate,booking.addDays(booking.tehranToday(),10));assert.equal(saved.reportMonth,1);assert.equal(saved.renewalMonth,2);const team=load('lib/team-auth.ts',{'@/lib/report-auth':auth});assert(!team.teamAuthenticated(new Request('https://example.com/blackhorse',{headers:{cookie}})));const teamCookie=team.teamCookie(new Request('https://example.com/blackhorse')).split(';')[0];assert(team.teamAuthenticated(new Request('https://example.com/blackhorse',{headers:{cookie:teamCookie}})));assert(!team.teamAuthenticated(new Request('https://example.com/blackhorse',{headers:{cookie:teamCookie+'x'}})));env.ROMAVA_TEAM_PASSWORD_HASH=auth.hash('team-test-password');
+const response=await route.GET(new Request('https://example.com/r/meeting/data',{headers:{cookie}}));const saved=(await response.json()).sessions[0];assert.equal(saved.notes.liked,'متن تست');assert.equal(saved.booking.secondPaymentDate,booking.addDays(booking.tehranToday(),10));assert.equal(saved.reportMonth,1);assert.equal(saved.renewalMonth,2);const team=load('lib/team-auth.ts',{'@/lib/report-auth':auth});assert(!await team.teamRole(new Request('https://example.com/blackhorse',{headers:{cookie}})));const teamCookie=team.teamCookie(new Request('https://example.com/blackhorse')).split(';')[0];assert(await team.teamRole(new Request('https://example.com/blackhorse',{headers:{cookie:teamCookie}})));assert(!await team.teamRole(new Request('https://example.com/blackhorse',{headers:{cookie:teamCookie+'x'}})));env.ROMAVA_TEAM_PASSWORD_HASH=auth.hash('team-test-password');
 const teamRoute=load('app/blackhorse/route.ts',{'@/lib/report-auth':auth,'@/lib/team-auth':team,'@/lib/meeting-store':{listMeetings:async()=>[]},'@/lib/meeting-booking':booking});
 const requestsUrl = 'https://example.com/blackhorse?view=requests';
 let contactReads = 0;
@@ -118,37 +131,69 @@ const addendumHtml=await addendum.text();
 assert.match(addendumHtml,/رازدار زره‌پوش/);
 assert.match(addendumHtml,/href="\/culture"/);
 assert.match(addendumHtml,/view=qc/);
+assert.match(addendumHtml,/view=password[^>]*>تغییر رمز/);
 assert.match(addendumHtml,/view=shoots/);
 assert.doesNotMatch(addendumHtml,/view=(requests|analytics|pricing|feedback)|id="team-notification-toggle"/);
-const setupProgress = new Map();
-const onboarding = load('lib/onboarding.ts', {
- '@/lib/mongodb': { default: Promise.resolve({db:()=>({collection:()=>({
-  findOne:async ({_id})=>setupProgress.get(_id) ?? null,
-  updateOne:async ({_id,step}, {$set})=>{
-   assert.equal(setupProgress.get(_id)?.step ?? 0, step);
-   setupProgress.set(_id, $set);
-   return {matchedCount:1};
-  },
- })})}) },
-});
+const onboarding = load('lib/onboarding.ts');
 const setupURL = 'https://example.com/r/onboarding';
 const dashboardURL = '/r/sample?view=monthly';
 const setupSession = 'sample-session';
-const setupPost = (step, confirmed='1', csrf=auth.hash(setupSession+':dashboard-onboarding')) =>
- onboarding.dashboardOnboarding(new Request(setupURL,{method:'POST',body:new URLSearchParams({step,confirmed,csrf})}),'client','client:sample',setupSession,dashboardURL);
+const setupPost = (step, confirmed='1', csrf=auth.hash(setupSession+':dashboard-onboarding'), extra={}) =>
+ onboarding.dashboardOnboarding(new Request(setupURL,{method:'POST',body:new URLSearchParams({step,confirmed,csrf,...extra})}),'client','client:sample',setupSession,dashboardURL,auth.hash('initial-password'),key=>'test='+key);
 assert.equal((await onboarding.requireOnboarding('client','client:sample')).headers.get('location'),'/r/onboarding');
 assert.equal((await setupPost('1')).headers.get('location'),'/r/onboarding');
-assert.equal((await setupPost('0','0')).headers.get('location'),'/r/onboarding');
+assert.equal((await setupPost('0','0')).status,400);
 assert.equal((await setupPost('0','1','bad')).status,403);
 assert.equal(setupProgress.size,0);
+const rotation = await setupPost('0','1',undefined,{'current-password':'initial-password','new-password':'newPass1','confirm-password':'newPass1'});
+assert.equal(rotation.headers.get('location'),'/r/onboarding');
+assert.match(rotation.headers.get('set-cookie'),/^test=[a-f0-9]{64}$/);
 for(const [index,title] of ['شناخت و اصول همکاری','گزارش ماهانه','چک‌لیست آمادگی آفیش'].entries()){
- const current=await onboarding.dashboardOnboarding(new Request(setupURL),'client','client:sample',setupSession,dashboardURL);
+ const current=await onboarding.dashboardOnboarding(new Request(setupURL),'client','client:sample',setupSession,dashboardURL,auth.hash('initial-password'),()=> '');
  assert.ok((await current.text()).includes(title));
- assert.equal((await setupPost(String(index))).headers.get('location'),index===2 ? dashboardURL : '/r/onboarding');
+ assert.equal((await setupPost(String(index+1))).headers.get('location'),index===2 ? dashboardURL : '/r/onboarding');
 }
 assert.equal(await onboarding.requireOnboarding('client','client:sample'),null);
 assert.equal((await onboarding.requireOnboarding('client','client:other')).status,303);
 assert.equal((await onboarding.requireOnboarding('team','team:creator')).status,303);
+const managerSetup = 'https://example.com/blackhorse?view=onboarding';
+setupProgress.set('team:manager',{step:1});
+assert.equal((await onboarding.requireOnboarding('team','team:manager')).status,303);
+const managerRoute = load('app/blackhorse/route.ts',{
+ '@/lib/report-auth':auth, '@/lib/team-auth':team, '@/lib/meeting-booking':booking,
+ '@/lib/meeting-store':{listMeetings:async()=>[]}, '../../lib/onboarding':onboarding,
+});
+const teamPasswordPage = await managerRoute.GET(new Request(managerSetup,{headers:{cookie:authorizedCookie}}));
+const managerCsrf = (await teamPasswordPage.text()).match(/name="csrf" value="([a-f0-9]+)"/)[1];
+const nextTeamPassword = 'newTeam2';
+const managerRotation = await managerRoute.POST(new Request(managerSetup,{method:'POST',headers:{cookie:authorizedCookie},body:new URLSearchParams({
+ csrf:managerCsrf,step:'0','current-password':'team-test-password','new-password':nextTeamPassword,'confirm-password':nextTeamPassword,
+})}));
+assert.equal(managerRotation.headers.get('location'),'/blackhorse');
+assert.equal(await onboarding.requireOnboarding('team','team:manager'),null);
+assert.equal(await team.teamRole(new Request(managerSetup,{headers:{cookie:authorizedCookie}})),null);
+assert.equal(await team.teamRole(new Request(managerSetup,{headers:{cookie:managerRotation.headers.get('set-cookie').split(';')[0]}})),'manager');
+assert.equal(await team.teamLoginKey('manager','team-test-password'),null);
+assert.ok(await team.teamLoginKey('manager',nextTeamPassword));
+const changeUrl = 'https://example.com/blackhorse?view=password';
+const firstRotatedCookie = managerRotation.headers.get('set-cookie').split(';')[0];
+const changePage = await managerRoute.GET(new Request(changeUrl,{headers:{cookie:firstRotatedCookie}}));
+assert.equal(changePage.status,200);
+const changeHtml = await changePage.text();
+assert.match(changeHtml,/ذخیرهٔ رمز جدید/);
+const changeCsrf = changeHtml.match(/name="csrf" value="([a-f0-9]+)"/)[1];
+const finalPassword = 'lastTeam3';
+const change = (csrf, currentPassword) => managerRoute.POST(new Request(changeUrl,{method:'POST',headers:{cookie:firstRotatedCookie},body:new URLSearchParams({
+ csrf,step:'0','current-password':currentPassword,'new-password':finalPassword,'confirm-password':finalPassword,
+})}));
+assert.equal((await change(managerCsrf,nextTeamPassword)).status,403);
+assert.equal((await change(changeCsrf,'team-test-password')).status,400);
+const changed = await change(changeCsrf,nextTeamPassword);
+assert.equal(changed.headers.get('location'),'/blackhorse');
+assert.equal(await team.teamRole(new Request(changeUrl,{headers:{cookie:firstRotatedCookie}})),null);
+assert.equal(await team.teamRole(new Request(changeUrl,{headers:{cookie:changed.headers.get('set-cookie').split(';')[0]}})),'manager');
+assert.equal(await team.teamLoginKey('manager',nextTeamPassword),null);
+assert.ok(await team.teamLoginKey('manager',finalPassword));
 const forged=await teamRoute.POST(new Request('https://example.com/blackhorse',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({username:'romava',password:'team-test-password',csrf:nonce})}));
 assert(!forged.headers.get('set-cookie').startsWith('romava_team_session='));
 console.log('PASS meeting sync: authenticated account, origin/validation, persistent readback, conflict protection, separate team session, tampering');})().catch(e=>{console.error(e);process.exitCode=1;});

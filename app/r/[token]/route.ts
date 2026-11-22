@@ -23,7 +23,9 @@ export async function GET(request: Request, { params }: Context) {
   const { token } = await params;
   const report = findReport(token);
   if (report instanceof Response) return report;
-  if (!authenticated(request, report)) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: "/admin" } });
+  const authorized = await authenticated(request, report).catch(() => undefined);
+  if (authorized === undefined) return new Response("Reports unavailable", { status: 503, headers: reportHeaders });
+  if (!authorized) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: "/admin" } });
   const setup = await requireOnboarding("client", "client:" + hash(report.token));
   if (setup) return setup;
   const months = Object.keys(report.months || {}).filter(key => /^[1-9]\d*$/.test(key)).sort((a, b) => Number(a) - Number(b));
@@ -68,7 +70,9 @@ export async function POST(request: Request, { params }: Context) {
   const { token } = await params;
   const report = findReport(token);
   if (report instanceof Response) return report;
-  if (!authenticated(request, report)) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: "/admin" } });
+  const authorized = await authenticated(request, report).catch(() => undefined);
+  if (authorized === undefined) return new Response("Reports unavailable", { status: 503, headers: reportHeaders });
+  if (!authorized) return new Response(null, { status: 303, headers: { ...reportHeaders, Location: "/admin" } });
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Unsupported form", { status: 415, headers: reportHeaders });
   const form = await request.formData().catch(() => null);
   if (form?.get("action") !== "logout") return new Response("Bad request", { status: 400, headers: reportHeaders });
