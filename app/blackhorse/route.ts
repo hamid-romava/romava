@@ -1,3 +1,4 @@
+import { projectCalculator } from "../../lib/project-calculator";
 import { dashboardOnboarding, requireOnboarding } from "../../lib/onboarding";
 import { feedbackKinds, isFeedbackKind } from "../../lib/feedback-types";
 import { getPricing, pricingFromForm, savePricing } from "../../lib/pricing-store";
@@ -32,7 +33,7 @@ function login(request: Request, error = "") {
 }
 const analyticsTestCookie = "romava_ga_test";
 
-function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing" | "feedback" | "culture-addendum") {
+function teamNavigation(request: Request, active: "meetings" | "requests" | "analytics" | "qc" | "shoots" | "pricing" | "feedback" | "culture-addendum" | "project-shares") {
   return `<header>
     <div class="team-brand"${teamRole(request) === "creator" ? ' data-team-role="creator"' : ""}>
       <button type="button" class="team-menu-toggle" popovertarget="team-menu" aria-label="منوی پنل تیم">
@@ -56,6 +57,7 @@ function teamNavigation(request: Request, active: "meetings" | "requests" | "ana
     <a href="/blackhorse?view=analytics"${active === "analytics" ? ' aria-current="page"' : ""}>آمار سایت</a>
     <a href="/blackhorse?view=pricing"${active === "pricing" ? ' aria-current="page"' : ""}>قیمت طرح‌ها</a>
     <a href="/blackhorse?view=qc"${active === "qc" ? ' aria-current="page"' : ""}>QC سایت</a>
+    <a href="/blackhorse?view=project-shares"${active === "project-shares" ? ' aria-current="page"' : ""}>ماشین‌حساب تقسیم درآمد</a>
     <a href="/blackhorse?view=culture-addendum"${active === "culture-addendum" ? ' aria-current="page"' : ""}>متمم فرهنگ‌نامه</a>
     <a href="/blackhorse?view=shoots"${active === "shoots" ? ' aria-current="page"' : ""}>چک‌لیست آفیش</a>
     </nav>
@@ -248,6 +250,15 @@ export async function GET(request: Request) {
     if (!view) return new Response(null, { status: 303, headers: { ...headers, Location: "/blackhorse?view=shoots" } });
     if (view !== "shoots" && view !== "qc" && view !== "culture-addendum") {
       return new Response("Forbidden", { status: 403, headers });
+    }
+  }
+  if (view === "project-shares") {
+    const navigation = teamNavigation(request, view).replace("</header>", "<h1>ماشین‌حساب تقسیم درآمد</h1></header>");
+    try {
+      const plans = pricedPlans(await getPricing());
+      return new Response(page(navigation + projectCalculator(plans), view), { headers });
+    } catch {
+      return new Response(page(navigation + '<p class="notice" role="alert">قیمت طرح‌ها فعلاً در دسترس نیست. دوباره تلاش کن.</p>', view), { status: 503, headers });
     }
   }
   if (view === "culture-addendum") return cultureAddendum(request);
