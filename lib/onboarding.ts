@@ -39,13 +39,15 @@ export async function requireOnboarding(audience: Audience, id: string) {
 const passwordRule = "رمز جدید باید حداقل ۸ نویسه و ترکیبی از حرف و عدد باشه. حداقل یک عدد لازمه.";
 const passwordStep = { title: "رمز عبور دلخواهت رو بذار", text: passwordRule, check: "" };
 
-function screen(step: SetupStep, index: number, total: number, action: string, csrf: string, passwordForm = false, error = "", backTo?: string) {
+function screen(step: SetupStep, index: number, total: number, action: string, csrf: string, passwordForm = false, error = "", backTo: string | undefined, audience: Audience) {
   const fields = passwordForm ? `<label>رمز فعلی<input type="password" name="current-password" autocomplete="current-password" maxlength="256" required></label>
   <label>رمز جدید<input type="password" name="new-password" autocomplete="new-password" minlength="8" maxlength="256" required></label>
   <label>تکرار رمز جدید<input type="password" name="confirm-password" autocomplete="new-password" minlength="8" maxlength="256" required></label>` :
     `<label><input type="checkbox" name="confirmed" value="1" required>${step.check}</label>`;
+  const showInstall = !backTo;
+  const appLinks = showInstall ? `<link rel="manifest" href="/romava-${audience}.webmanifest"><link rel="apple-touch-icon" href="/brand/dashboard-app-180.png"><script src="/dashboard-install.js" defer></script>` : "";
   const fa = new Intl.NumberFormat("fa-IR");
-  return new Response(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${step.title} | روماوا</title><style>
+  return new Response(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${appLinks}<title>${step.title} | روماوا</title><style>
   @font-face{font-family:Yekan;src:url('/fonts/YekanBakh-Regular.ttf');font-display:swap}
   *{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#edf2ff,#fafbfe 65%);color:#26324a;font:16px/1.9 Yekan,sans-serif}
   main{width:min(100%,570px);min-height:100svh;margin:auto;padding:36px 24px;display:grid;align-content:center}
@@ -57,10 +59,12 @@ function screen(step: SetupStep, index: number, total: number, action: string, c
   input[type=password]{width:100%;padding:10px;border:1px solid #dce3ef;border-radius:10px;font:inherit}
   .password-form label{display:grid;gap:4px}.setup-error{color:#9a302a;margin:0}
   button{min-height:46px;border:0;border-radius:11px;background:#2855f5;color:#fff;font:inherit;cursor:pointer}button:disabled{opacity:.45;cursor:default}
+  #dashboard-install button{padding:0 14px;margin-top:10px}
   :focus-visible{outline:2px solid #2855f5;outline-offset:3px}
   </style></head><body><main><header><img src="/brand/romava-logo-focus.svg" alt="روماوا">${backTo ? "" : `<small>${fa.format(index+1)} از ${fa.format(total)}</small>`}<h1>${step.title}</h1><p>${step.text}</p></header>
   ${step.details ? `<details><summary>${step.title} رو بخون</summary>${step.details}</details>` : ""}
   <form${passwordForm ? ' class="password-form"' : ""} method="post" action="${action.replaceAll("&","&amp;")}"><input type="hidden" name="csrf" value="${csrf}"><input type="hidden" name="step" value="${index}">${error ? `<p role="alert" class="setup-error">${error}</p>` : ""}${fields}<button>${backTo ? "ذخیرهٔ رمز جدید" : index+1 === total ? "ورود به داشبورد" : "ادامه"}</button></form>${backTo ? `<a href="${backTo}">بازگشت به داشبورد</a>` : ""}
+  ${showInstall ? `<details id="dashboard-install" hidden><summary>نصب اپ روماوا</summary><button type="button" hidden>نصب اپ</button><p>از منوی مرورگر، گزینهٔ نصب برنامه یا افزودن به صفحهٔ اصلی رو انتخاب کن.</p></details>` : ""}
   </main><script src="/dashboard-onboarding.js" defer></script></body></html>`, { status: error ? 400 : 200, headers: htmlHeaders });
 }
 
@@ -83,7 +87,7 @@ export async function dashboardOnboarding(
     const passwordForm = needsPassword || changing;
     const index = passwordForm ? 0 : completed + 1;
     const current = changing ? { ...passwordStep, title: "تغییر رمز عبور" } : needsPassword ? passwordStep : flow[completed];
-    const render = (error = "") => screen(current, index, flow.length + 1, path, csrf, passwordForm, error, changing ? destination : undefined);
+    const render = (error = "") => screen(current, index, flow.length + 1, path, csrf, passwordForm, error, changing ? destination : undefined, audience);
     if (request.method !== "POST") return render();
     if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) return new Response(null, { status: 415, headers: htmlHeaders });
     const form = await request.formData().catch(() => null);
