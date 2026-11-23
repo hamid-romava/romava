@@ -18,6 +18,7 @@ const icon = (name: Icon) =>`<svg width="22" height="22" viewBox="0 0 24 24" fil
 const css=`
 .app-header{display:grid!important;grid-template-columns:minmax(60px,1fr) minmax(0,2fr) minmax(60px,1fr);align-items:center;gap:8px}
 .app-header>.app-brand,.app-header>.team-brand{grid-area:1/1;display:flex;align-items:center;gap:6px;min-width:0}
+.dashboard-version{margin:14px 0 0;color:#657186;font-size:12px;text-align:center}.dashboard-version bdi{font-variant-numeric:tabular-nums}
 .drawer-logo{display:block;width:min(148px,100%);height:auto}.team-menu-toggle{flex:none}
 .app-header .account{display:none}
 .app-header>.app-title,.app-header>h1{grid-area:1/2;margin:0;text-align:center;font-size:clamp(13px,3.2vw,19px);line-height:1.55;font-weight:700;overflow-wrap:anywhere;color:#26324a}
@@ -86,6 +87,9 @@ body:has(.app-tabs):not(:has(.app-tabs-floating)){padding-bottom:calc(80px + env
 `;
 const tabs = (items: Tab[], current: string, floating = false) =>`<nav class="app-tabs${floating ? " app-tabs-floating" : ""}" aria-label="منوی اصلی داشبورد">${items.map(([href,label,glyph])=>`<a href="${href}"${href===current?' aria-current="page"':''}>${icon(glyph)}<span>${label}</span></a>`).join('')}</nav>`;
 const back = (href: string, label: string) =>`<a class="app-button app-back" href="${href}" aria-label="${label}">${icon('back')}</a>`;
+const dashboardVersion = "1.0";
+const dashboardVersionLabel = `<p class="dashboard-version">نسخهٔ داشبورد <bdi dir="ltr">${dashboardVersion}</bdi></p>`;
+
 export function clientNavigation(html: string, token: string, current: string) {
   const hero=html.match(/<header[^>]*>([\s\S]*?)<\/header>/);
   if(!hero)return html;
@@ -97,7 +101,7 @@ export function clientNavigation(html: string, token: string, current: string) {
   const picker=hero[1].match(/<form class="month-picker"[\s\S]*?<\/form>/)?.[0]??'';
   const title=context?.[1]??(current===home+'?view=monthly'?'گزارش ماهانه':null)??(({ '/r/collaboration':'شناخت و اصول همکاری','/r/feedback':'انتقادات و پیشنهادات','/r/preparation':'آمادگی روز آفیش','/r/plans':'طرح‌های پیشنهادی تولید محتوا','/r/meeting':'جلسه ماهانه' } as Record<string, string>)[current]??'گزارش عملکرد');
   const header=`<header class="topbar app-header"><div class="app-brand"><button class="app-button" type="button" popovertarget="client-drawer" aria-label="منوی بیشتر">${icon('menu')}</button></div><p class="app-title"${isMeeting?' id="meeting-context"':''}>${title}</p>${current===home?'':back(home,'بازگشت به داشبورد')}${current.startsWith(home)?'<span id="accountName" hidden></span>':''}${picker}</header>`;
-  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><img class="drawer-logo" src="${dashboardLogo}" alt="روماوا"><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌های پیشنهادی تولید محتوا</a><a class="app-link" href="/r/collaboration"${current==="/r/collaboration"?' aria-current="page"':""}>شناخت و اصول همکاری</a><a class="app-link" href="/r/feedback"${current==="/r/feedback"?' aria-current="page"':""}>انتقادات و پیشنهادات</a><a class="app-link" href="/r/onboarding?view=password">تغییر رمز</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form></div>`;
+  const drawer=`<div id="client-drawer" class="app-drawer" popover><div class="app-drawer-head"><img class="drawer-logo" src="${dashboardLogo}" alt="روماوا"><button class="app-button" type="button" popovertarget="client-drawer" popovertargetaction="hide" aria-label="بستن منو">×</button></div><nav class="app-drawer-links" aria-label="بخش‌های داشبورد">${archived??''}<a class="app-link" href="/r/plans">طرح‌های پیشنهادی تولید محتوا</a><a class="app-link" href="/r/collaboration"${current==="/r/collaboration"?' aria-current="page"':""}>شناخت و اصول همکاری</a><a class="app-link" href="/r/feedback"${current==="/r/feedback"?' aria-current="page"':""}>انتقادات و پیشنهادات</a><a class="app-link" href="/r/onboarding?view=password">تغییر رمز</a><a class="app-link" href="/">سایت روماوا</a></nav><form method="post" action="${home}"><input type="hidden" name="action" value="logout"><button class="app-link">خروج از حساب</button></form>${dashboardVersionLabel}</div>`;
   html=html.replace(hero[0],()=>header);
   if(archived)html=html.replace(archived,'');
   if(context)html=html.replace(context[0],'');
@@ -110,7 +114,7 @@ export function teamNavigationLayout(html: string, view: string, backToShoots: b
   const team='/blackhorse';
   const creator = html.includes('data-team-role="creator"');
   const logout=html.match(/<form method="post" action="\/blackhorse">[\s\S]*?<\/form>/)?.[0];
-  if(logout)html=html.replace(logout,'').replace('</nav>\n  </div>',()=>'</nav>'+logout.replace('>خروج<','>خروج از حساب<')+'</div>');
+  if(logout)html=html.replace(logout,'').replace('</nav>\n  </div>',()=>'</nav>'+logout.replace('>خروج<','>خروج از حساب<')+dashboardVersionLabel+'</div>');
   const bottomTabs: Tab[] = creator
     ? [[team+'?view=shoots','چک‌لیست آفیش','shoot'],[team+'?view=qc','QC سایت','prep']]
     : [[team+'?view=requests','درخواست‌ها','inbox'],[team+'?view=analytics','آمار سایت','chart'],[team+'?view=shoots','چک‌لیست آفیش','shoot']];
