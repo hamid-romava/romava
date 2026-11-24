@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { calculateProjectShares as calculate, parseProjectAmount as parse } from "../public/project-shares.mjs";
+import { calculateProjectShares as calculate, parseProjectAmount as parse, personalProjectShare } from "../public/project-shares.mjs";
 
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 0.000001);
 for (const [amount, team, support, romava] of [[0,0,0,0],[100,59.5,10,30.5],[200,119,20,61],[400,179-30/55,20,201+30/55],[500,209-45/55,20,271+45/55]]) {
@@ -40,14 +40,14 @@ close(calculate(500).romavaCore.amount, 270);
 const base = calculate(100);
 const expectedRoles = [
   ["کاوشگر (دیسکاوری)", 10], ["نویسنده و آنالیزور", 15], ["کارگردان", 10],
-  ["تصویرگر (ادیتور)", 15], ["آچار فرانسه", 7],
+  ["تصویرگر (ادیتور)", 15], ["آچار فرانسه", 5],
 ];
 assert.deepEqual(base.teamShares.map(role => role.name), expectedRoles.map(([name]) => name));
 expectedRoles.forEach(([, amount], index) => close(base.teamShares[index].amount, amount));
 const expectedTasks = [
-  ["دیسکاوری", 10], ["اسکریپت", 14], ["آنالیز", 1], ["دکوپاژ", 5],
-  ["آفیش کارگردانی", 5], ["ادیت", 15], ["آفیش کمک", 2.5],
-  ["استوریست", 2.5], ["هماهنگی و انتشار", 2],
+  ["دیسکاوری", 10], ["اسکریپت", 14], ["آنالیز", 1], ["دکوپاژ", 3.5],
+  ["آفیش کارگردانی", 4.5], ["هماهنگی و انتشار", 2], ["ادیت", 15], ["آفیش کمک", 2.5],
+  ["استوریست", 2.5],
 ];
 assert.deepEqual(base.taskShares.map(task => task.name), expectedTasks.map(([name]) => name));
 expectedTasks.forEach(([, amount], index) => close(base.taskShares[index].amount, amount));
@@ -61,3 +61,13 @@ for (const amount of [100, 500]) {
 }
 close(base.projectManagement.amount, 2.5);
 close(calculate(500).projectManagement.extraShare, 0);
+close(base.acquisitionShare.amount, 2);
+close(extra.acquisitionShare.extraShare, 90 * 2 / 55);
+assert.ok(!base.taskShares.some(task => task.name === "جذب"));
+close(base.teamTotal.amount, base.teamShares.reduce((total, role) => total + role.amount, base.projectManagement.amount + base.acquisitionShare.amount));
+const personalBase = calculate(45_000_000, 270_000);
+close(personalProjectShare(personalBase, [], 10).amount, 1_372_500);
+const chosen = personalBase.taskShares.findIndex(task => task.name === "دکوپاژ");
+close(personalProjectShare(personalBase, [chosen], 10).amount, 2_947_500);
+close(personalProjectShare(personalBase, [chosen], 0).amount, 1_575_000);
+close(personalProjectShare(personalBase, [], 100).amount, personalBase.romava.amount);

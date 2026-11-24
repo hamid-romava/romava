@@ -24,6 +24,7 @@ export function projectCalculator(plans: ReturnType<typeof pricedPlans>) {
 .project-role-grid label:has(input:disabled){color:#697486;cursor:default}
 .project-task-weight{margin-inline-start:auto}
 .project-role-grid input{width:17px;height:17px;flex:none;margin:0;accent-color:#244dff}
+.project-personal-romava input{width:100%;margin-bottom:0}
 #project-personal{margin-top:16px}
 #project-personal:not([hidden]){display:grid;gap:4px;padding:16px;background:#f7f8fa;border:1px solid #e1e5ec;border-radius:13px}
 #project-personal strong{font-size:24px}
@@ -54,6 +55,12 @@ export function projectCalculator(plans: ReturnType<typeof pricedPlans>) {
         <input id="project-custom" type="text" inputmode="decimal" autocomplete="off" placeholder="مثلاً ۵۰" aria-describedby="project-custom-error">
         <p id="project-custom-error" role="alert" hidden>مبلغ پروژه باید یه عدد معتبر و بزرگ‌تر از صفر باشه.</p>
       </div>
+      <div class="project-personal-romava">
+        <label for="project-romava-rate">درصد از سهم روماوا (اختیاری)</label>
+        <input id="project-romava-rate" type="text" inputmode="decimal" autocomplete="off" value="۰" aria-describedby="project-romava-help project-romava-error">
+        <small id="project-romava-help">مثلاً ۱۰ یعنی ۱۰٪ از مبلغ کارت «سهم روماوا».</small>
+        <p id="project-romava-error" role="alert" hidden>یه درصد بین صفر تا ۱۰۰ وارد کن.</p>
+      </div>
     </div>
   </section>
   <section id="project-results" hidden>
@@ -65,6 +72,7 @@ export function projectCalculator(plans: ReturnType<typeof pricedPlans>) {
         <span>سهم شما از پروژه</span>
         <strong id="project-personal-amount"></strong>
         <span id="project-personal-rate"></span>
+        <small id="project-personal-romava" hidden></small>
       </output>
     </section>
     <div id="project-totals"></div>
