@@ -1,4 +1,4 @@
-import { resetTestOnboardingOnce } from "@/lib/dashboard-password";
+import { recoverTestClient, resetTestOnboardingOnce } from "@/lib/dashboard-password";
 import { loginTemplate } from "@/lib/report-login";
 import { randomBytes } from "node:crypto";
 import { createSession, equal, reportLoginKey, reportAccountId, htmlHeaders, normalize, reportHeaders, reports, username } from "@/lib/report-auth";
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const normalizedName = normalize(name);
     for (const report of Object.values(reports())) {
       if (normalizedName !== username(report)) continue;
-      const key = await reportLoginKey(report, password);
+      const key = await reportLoginKey(report, password) ?? (normalizedName === "کلاینت تست" ? await recoverTestClient(reportAccountId(report), password) : null);
       if (!key) continue;
       if (normalizedName === "کلاینت تست") await resetTestOnboardingOnce(reportAccountId(report));
       return new Response(null, { status: 303, headers: { ...reportHeaders, Location: `/r/${report.token}?view=monthly`, "Set-Cookie": createSession(request, report, key) } });
