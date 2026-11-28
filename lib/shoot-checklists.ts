@@ -22,14 +22,15 @@ const recordingItems = [
   ["osta-level", "اوستا تراز"],
   ["presenter-lighting", "نورپردازی بر اساس مجری"],
   ["camera", "تنظیمات دوربین (رزولوشن و فوکوس)"],
-  ["microphone", "تست میکروفون"],
+  ["microphone", "تست مایک - وصل بودن صدا"],
+  ["microphone-tx-charge", "تست مایک - شارژ داشتن TX"],
   ["subject", "چک کردن مجری (لباس، آراستگی صورت، نحوهٔ نشستن و ایستادن)"],
   ["cover", "عکس کاور"],
   ["doctor-frame", "تأیید قاب (نشون دادن عکس کاور)"],
 ] as const;
 
 type Checklist = { checked: string[]; revision: number };
-type GeneralChecklist = Checklist & { arrivalTime?: string; departureTime?: string; departureNote?: string };
+type GeneralChecklist = Checklist & { arrivalTime?: string; departureTime?: string; departureNote?: string; lostMinutes?: number | null; lostTimeDetails?: string };
 type Recording = Checklist & { id: string; name: string };
 type Shoot = {
   _id: string; name: string; client: keyof typeof clients; contract: string; number: string;
@@ -42,9 +43,16 @@ const applicableArrivalItems = (shoot: Shoot) => arrivalItems.filter(([id]) =>
   (id !== "no-hard-feelings" && id !== "doctor-honesty-letter") || !shoot.closedAt || shoot.general.checked.includes(id),
 );
 const arrivalComplete = (shoot: Shoot) => Boolean(shoot.general.arrivalTime) && allChecked(applicableArrivalItems(shoot), shoot.general.checked);
-const applicableRecordingItems = (shoot: Shoot, row: Recording) => recordingItems.filter(([id]) =>
-  id !== "osta-level" || !shoot.closedAt || row.checked.includes(id),
-);
+const microphoneCharge = "microphone-tx-charge";
+const previousRecordingItems = recordingItems.filter(([id]) => id !== microphoneCharge);
+const applicableRecordingItems = (shoot: Shoot, row: Recording) => {
+  const needsCharge = row.checked.includes(microphoneCharge)
+    || (!shoot.closedAt && !allChecked(previousRecordingItems, row.checked));
+  return recordingItems.filter(([id]) =>
+    (id !== "osta-level" || !shoot.closedAt || row.checked.includes(id))
+    && (id !== microphoneCharge || needsCharge),
+  );
+};
 const firstIncompleteRecording = (shoot: Shoot) => shoot.recordings.find(row => !allChecked(applicableRecordingItems(shoot, row), row.checked));
 const canLeave = (shoot: Shoot) => arrivalComplete(shoot) && shoot.recordings.length > 0 && !firstIncompleteRecording(shoot);
 
@@ -116,6 +124,10 @@ export async function renderShootChecklists(url: URL, { escape, csrf, newId }: R
     const timeField = departure ? "departureTime" : "arrivalTime";
     const timeInput = selected ? "" : `<label>${departure ? "ساعت خروج" : "ساعت ورود"}<input type="time" name="${timeField}"${shoot.closedAt ? " disabled" : " required"} value="${escape(shoot.general[timeField])}"></label>`;
     const noteInput = departure ? `<label>یادداشت (اختیاری)<textarea name="departureNote" rows="4" maxlength="2000"${shoot.closedAt ? " readonly" : ""}>${escape(shoot.general.departureNote)}</textarea></label>` : "";
+    const lostTimeInput = departure ? `<fieldset><legend>تایم پرتی ضبط (اختیاری)</legend>
+      <label>میزان تایم پرتی (دقیقه)<input name="lostMinutes" inputmode="numeric" maxlength="4" value="${escape(shoot.general.lostMinutes)}"${shoot.closedAt ? " readonly" : ""}></label>
+      <label>پرتی‌ها چی بودن؟<textarea name="lostTimeDetails" rows="3" maxlength="2000"${shoot.closedAt ? " readonly" : ""}>${escape(shoot.general.lostTimeDetails)}</textarea></label>
+    </fieldset>` : "";
     const sectionFields = selected ? "" : hidden("section", section);
     const completed = items.filter(([id]) => checked.has(id)).length;
 
@@ -130,7 +142,7 @@ export async function renderShootChecklists(url: URL, { escape, csrf, newId }: R
         ? '<p class="notice" role="alert">این چک‌لیست هم‌زمان تغییر کرده. آخرین تیک‌ها رو چک کن و دوباره ذخیره کن.</p>'
         : "";
     const checklistForm = form("shoot-save", `${hidden("shoot", shoot._id)}${hidden("recording", selected?.id ?? "")}${hidden("revision", checklist.revision)}
-      ${sectionFields}${timeInput}<div class="shoot-items">${renderItems(items)}</div>${noteInput}
+      ${sectionFields}${timeInput}<div class="shoot-items">${renderItems(items)}</div>${lostTimeInput}${noteInput}
       ${shoot.closedAt ? "" : "<button>ذخیرهٔ چک‌لیست</button>"}`);
     const checklistCard = `<section class="card">
       <h2>${selected ? escape(selected.name || `ضبط ${format.format(shoot.recordings.indexOf(selected) + 1)}`) : title}</h2>
@@ -217,22 +229,23 @@ export async function changeShootChecklist(action: string, form: FormData) {
   const revision = Number(field(form, "revision"));
   const requested = new Set(form.getAll("checked"));
   if (recording) {
-    const checked = recordingItems.map(([id]) => id).filter(id => requested.has(id));
-    if (!allChecked(recordingItems, checked)) return link(shoot, recording) + "&status=incomplete";
     const collection = await shoots();
     const current = await collection.findOne({ _id: shoot });
     if (!current) return null;
     if (current.closedAt) return link(shoot, recording) + "&status=closed";
     const index = current.recordings.findIndex(row => row.id === recording);
     if (index < 0) return null;
-    if (!arrivalComplete(current) || current.recordings.slice(0, index).some(row => !allChecked(recordingItems, row.checked))) {
+    const items = applicableRecordingItems(current, current.recordings[index]);
+    const checked = recordingItems.map(([id]) => id).filter(id => requested.has(id));
+    if (!allChecked(items, checked)) return link(shoot, recording) + "&status=incomplete";
+    if (!arrivalComplete(current) || current.recordings.slice(0, index).some(row => !allChecked(applicableRecordingItems(current, row), row.checked))) {
       return link(shoot, recording) + "&status=locked";
     }
     const result = await collection.updateOne({ _id: shoot, closedAt: { $exists: false }, "general.revision": current.general.revision, recordings: { $elemMatch: { id: recording, revision } } }, {
       $set: { "recordings.$.checked": checked }, $inc: { "recordings.$.revision": 1 },
     });
     if (!result.matchedCount) return link(shoot, recording) + "&status=conflict";
-    const next = current.recordings.slice(index + 1).find(row => !allChecked(recordingItems, row.checked));
+    const next = current.recordings.slice(index + 1).find(row => !allChecked(applicableRecordingItems(current, row), row.checked));
     return link(shoot, next?.id ?? "new") + "&status=recording-saved";
   }
   const section = field(form, "section");
@@ -241,7 +254,10 @@ export async function changeShootChecklist(action: string, form: FormData) {
   const timeField = departure ? "departureTime" : "arrivalTime";
   const time = field(form, timeField);
   const departureNote = departure ? field(form, "departureNote") : "";
-  if (!validTime(time) || departureNote.length > 2000) return null;
+  const lostMinutes = departure ? normalizeDigits(field(form, "lostMinutes")) : "";
+  const lostTimeDetails = departure ? field(form, "lostTimeDetails") : "";
+  if (!validTime(time) || departureNote.length > 2000 || lostTimeDetails.length > 2000
+    || (lostMinutes && !/^\d{1,4}$/.test(lostMinutes))) return null;
   const collection = await shoots();
   const current = await collection.findOne({ _id: shoot });
   const sectionUrl = link(shoot) + (departure ? "&checklist=departure" : "");
@@ -256,7 +272,7 @@ export async function changeShootChecklist(action: string, form: FormData) {
     _id: shoot, closedAt: { $exists: false }, "general.revision": revision,
     ...(departure ? { recordings: { $size: current.recordings.length } } : {}),
   }, {
-    $set: { "general.checked": checked, [`general.${timeField}`]: time, ...(departure ? { closedAt: new Date(), "general.departureNote": departureNote } : {}) },
+    $set: { "general.checked": checked, [`general.${timeField}`]: time, ...(departure ? { closedAt: new Date(), "general.departureNote": departureNote, "general.lostMinutes": lostMinutes === "" ? null : Number(lostMinutes), "general.lostTimeDetails": lostTimeDetails } : {}) },
     $inc: { "general.revision": 1 },
   });
   if (result.matchedCount && departure) return path + "&status=closed";
