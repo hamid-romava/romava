@@ -87,7 +87,7 @@ body:has(.app-tabs):not(:has(.app-tabs-floating)){padding-bottom:calc(80px + env
 `;
 const tabs = (items: Tab[], current: string, floating = false) =>`<nav class="app-tabs${floating ? " app-tabs-floating" : ""}" aria-label="منوی اصلی داشبورد">${items.map(([href,label,glyph])=>`<a href="${href}"${href===current?' aria-current="page"':''}>${icon(glyph)}<span>${label}</span></a>`).join('')}</nav>`;
 const back = (href: string, label: string) =>`<a class="app-button app-back" href="${href}" aria-label="${label}">${icon('back')}</a>`;
-const dashboardVersion = "1.2";
+const dashboardVersion = "1.3";
 const dashboardVersionLabel = `<p class="dashboard-version">نسخهٔ داشبورد <bdi dir="ltr">${dashboardVersion}</bdi></p>`;
 
 export function clientNavigation(html: string, token: string, current: string) {
