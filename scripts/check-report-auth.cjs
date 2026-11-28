@@ -82,7 +82,7 @@ async function call(route, path, { method = 'GET', username, password, cookie, o
     assert(html.includes(auth.hash('preparation-v1:' + report.token)));
     assert.equal((html.match(/type="checkbox"/g) || []).length, 13);
     assert(html.includes("آمادگی ضبط"));
-    assert(html.includes("تاج گل سروریتو سرت کن"));
+    assert(html.includes("تاج گل سروریتو بچسبون!"));
     assert(response.headers.get('Cache-Control').includes('no-store'));
   }
   const secondCookie = secondLogin.headers.get('set-cookie').split(';')[0];
