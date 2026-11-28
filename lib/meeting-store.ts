@@ -12,7 +12,7 @@ export function currentCycle() {
   return `${parts.find(p => p.type === "year")!.value}-${parts.find(p => p.type === "month")!.value}`;
 }
 export function validCycle(value: unknown): value is string { return typeof value === "string" && /^20\d{2}-(0[1-9]|1[0-2])$/.test(value); }
-export function validateAnswers(input: unknown, requireBooking = false, pricing?: PricingSettings): MeetingAnswers | null {
+export function validateAnswers(input: unknown, requireComplete = false, pricing?: PricingSettings): MeetingAnswers | null {
   if (!input || typeof input !== "object") return null;
   const value = input as Record<string, unknown>;
   if (!value.notes || typeof value.notes !== "object" || Array.isArray(value.notes) || !value.ready || typeof value.ready !== "object" || Array.isArray(value.ready)) return null;
@@ -21,10 +21,11 @@ export function validateAnswers(input: unknown, requireBooking = false, pricing?
     const note = (value.notes as Record<string, unknown>)[key];
     const checked = (value.ready as Record<string, unknown>)[key];
     if (typeof note !== "string" || note.length > 6000 || typeof checked !== "boolean") return null;
+    if (requireComplete && (!note.trim() || !checked)) return null;
     notes[key] = note; ready[key] = checked;
   }
   const booking = value.booking === undefined ? undefined : validateBooking(value.booking, undefined, pricing);
-  if ((requireBooking && !booking) || booking === null) return null;
+  if ((requireComplete && !booking) || booking === null) return null;
   return { notes, ready, ...(booking ? { booking } : {}) };
 }
 async function collection() {
