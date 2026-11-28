@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import { hash } from "@/lib/report-auth";
 
 export const meetingKeys = ["liked", "improve", "results", "next-month", "ideas"] as const;
-export type MeetingAnswers = { notes: Record<string, string>; ready: Record<string, boolean>; booking?: MeetingBooking };
+export type MeetingAnswers = { notes: Record<string, string>; booking?: MeetingBooking };
 export type MeetingRecord = MeetingAnswers & { _id: string; doctorId: string; doctorName: string; cycle: string; sessionId?: string; revision: number; reportMonth?: number; renewalMonth?: number; meetingTitle?: string; updatedAt: Date };
 let connection: Promise<mongoose.Connection> | undefined;
 export function currentCycle() {
@@ -15,18 +15,17 @@ export function validCycle(value: unknown): value is string { return typeof valu
 export function validateAnswers(input: unknown, requireComplete = false, pricing?: PricingSettings): MeetingAnswers | null {
   if (!input || typeof input !== "object") return null;
   const value = input as Record<string, unknown>;
-  if (!value.notes || typeof value.notes !== "object" || Array.isArray(value.notes) || !value.ready || typeof value.ready !== "object" || Array.isArray(value.ready)) return null;
-  const notes: Record<string, string> = {}, ready: Record<string, boolean> = {};
+  if (!value.notes || typeof value.notes !== "object" || Array.isArray(value.notes)) return null;
+  const notes: Record<string, string> = {};
   for (const key of meetingKeys) {
     const note = (value.notes as Record<string, unknown>)[key];
-    const checked = (value.ready as Record<string, unknown>)[key];
-    if (typeof note !== "string" || note.length > 6000 || typeof checked !== "boolean") return null;
-    if (requireComplete && (!note.trim() || !checked)) return null;
-    notes[key] = note; ready[key] = checked;
+    if (typeof note !== "string" || note.length > 6000) return null;
+    if (requireComplete && !note.trim()) return null;
+    notes[key] = note;
   }
   const booking = value.booking === undefined ? undefined : validateBooking(value.booking, undefined, pricing);
   if ((requireComplete && !booking) || booking === null) return null;
-  return { notes, ready, ...(booking ? { booking } : {}) };
+  return { notes, ...(booking ? { booking } : {}) };
 }
 async function collection() {
   if (!process.env.MONGODB_URI) throw new Error("Meeting storage unavailable");
