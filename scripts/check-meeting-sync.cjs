@@ -148,7 +148,7 @@ assert.equal(setupProgress.size,0);
 const rotation = await setupPost('0','1',undefined,{'current-password':'initial-password','new-password':'newPass1','confirm-password':'newPass1'});
 assert.equal(rotation.headers.get('location'),'/r/onboarding');
 assert.match(rotation.headers.get('set-cookie'),/^test=[a-f0-9]{64}$/);
-for(const [index,title] of ['شناخت و اصول همکاری','گزارش ماهانه','چک‌لیست آمادگی آفیش'].entries()){
+for(const [index,title] of ['شناخت و اصول همکاری','گزارش ماهانه','آمادگی ضبط'].entries()){
  const current=await onboarding.dashboardOnboarding(new Request(setupURL),'client','client:sample',setupSession,dashboardURL,auth.hash('initial-password'),()=> '');
  assert.ok((await current.text()).includes(title));
  assert.equal((await setupPost(String(index+1))).headers.get('location'),index===2 ? dashboardURL : '/r/onboarding');
